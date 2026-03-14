@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+  <h1 class="text-center mt-3">Welcome Admin {{ session['username'] }}</h1>
+
+  <div class="container mt-4">
+    <h2>Current Stock</h2>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Product Name</th>
+          <th>Barcode</th>
+          <th>Price</th>
+          <th>Stock</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      {% include "products_table.html" %}
+    </table>
+
+    <!-- Add Product Button -->
+    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addModal">Add Product</button>
+  </div>
+
+  <!-- Add Product Modal -->
+  <div class="modal fade" id="addModal" tabindex="-1">
+    <div class="modal-dialog">
+      <form method="POST" action="{{ url_for('add_product') }}">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Add Product</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <input type="text" name="name" class="form-control mb-2" placeholder="Product Name" required>
+            <div class="text-danger small" id="nameError"></div>
+            <input type="text" name="barcode" class="form-control mb-2" placeholder="Barcode" required>
+            <div class="text-danger small" id="barcodeError"></div>
+            <input type="number" name="price" class="form-control mb-2" placeholder="Price" min="0" step="0.01" required>
+            <div class="text-danger small" id="priceError"></div>
+            <input type="number" name="stock" class="form-control mb-2" placeholder="Stock" required>
+            <div class="text-danger small" id="stockError"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-success">Save</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% for product in products %}
+  <!-- Edit Product Modal -->
+  <div class="modal fade" id="editModal{{ product.id }}" tabindex="-1">
+    <div class="modal-dialog">
+      <form method="POST" action="{{ url_for('edit_product', id=product.id) }}">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Edit Product</h5>
+          </div>
+          <div class="modal-body">
+            <input type="text" name="name" class="form-control mb-2" value="{{ product.name }}" required>
+            <input type="text" name="barcode" class="form-control mb-2" value="{{ product.barcode }}" required>
+            <input type="number" name="price" class="form-control mb-2" value="{{ product.price }}" min="0" step="0.01" required>
+            <input type="number" name="stock" class="form-control mb-2" value="{{ product.stock }}" min="0" step="1" required>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Product Modal -->
+  <div class="modal fade" id="deleteModal{{ product.id }}" tabindex="-1">
+    <div class="modal-dialog">
+      <form method="POST" action="{{ url_for('delete_product', id=product.id) }}">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Delete Product</h5>
+          </div>
+          <div class="modal-body">
+            <p>Are you sure you want to delete <strong>{{ product.name }}</strong>?</p>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-danger">Delete</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+
+  <a href="{{ url_for('sales_history') }}" class="btn btn-info mb-3">View Sales History</a>
+
+  <script>
+    document.getElementById("searchBar").addEventListener("keyup", function() {
+      let filter = this.value.toLowerCase();
+      let rows = document.querySelectorAll("#productTable tr");
+      rows.forEach(row => {
+        let text = row.textContent.toLowerCase();
+        row.style.display = text.includes(filter) ? "" : "none";
+      });
+    });
+
+    function refreshProducts() {
+      fetch("/products_table")
+        .then(response => response.text())
+        .then(html => {
+          document.getElementById("productTable").outerHTML = html;
+        });
+    }
+
+    document.querySelectorAll("form").forEach(form => {
+      form.addEventListener("submit", function(e) {
+        e.preventDefault();
+        fetch(form.action, {
+          method: form.method,
+          body: new FormData(form)
+        }).then(() => {
+          let modal = bootstrap.Modal.getInstance(form.closest(".modal"));
+          modal.hide();
+          refreshProducts();
+        });
+      });
+    });
+  </script>
+{% endblock %}
