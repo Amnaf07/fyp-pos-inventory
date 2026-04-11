@@ -1,15 +1,15 @@
 {% extends "base.html" %}
-
 {% block title %}Cashier Dashboard{% endblock %}
 
 {% block content %}
+<div class="container mt-4">
   <h2 class="text-center">Point of Sale</h2>
 
   <div class="row mt-4">
     <!-- Product Search Panel -->
     <div class="col-md-6">
       <h4>Search Products</h4>
-<input type="text" id="searchBar" class="form-control mb-3" placeholder="Search products...">
+      <input type="text" id="searchBar" class="form-control mb-3" placeholder="Search products...">
       <table class="table table-striped">
         <thead>
           <tr>
@@ -58,43 +58,43 @@
         <tbody></tbody>
       </table>
 
-      <!-- GrandTotal +checkout -->
+      <!-- Grand Total + Checkout -->
       <h5 class="mt-3">Grand Total: <span id="grandTotal">0.00</span></h5>
       <button class="btn btn-primary mt-3" id="checkoutBtn">Checkout</button>
     </div>
   </div>
 
   <!-- Receipt Modal -->
-<div class="modal fade" id="receiptModal" tabindex="-1" aria-labelledby="receiptModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="receiptModalLabel">Receipt</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <table class="table table-bordered">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Qty</th>
-              <th>Price</th>
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody id="receiptTableBody"></tbody>
-        </table>
-        <h4>Grand Total: <span id="receiptGrandTotal">0.00</span></h4>
-        <p>Receipt ID: <span id="receiptId"></span></p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary" id="printReceiptBtn">Print Receipt</button>
+  <div class="modal fade" id="receiptModal" tabindex="-1" aria-labelledby="receiptModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="receiptModalLabel">Receipt</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Qty</th>
+                <th>Price</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="receiptTableBody"></tbody>
+          </table>
+          <h4>Grand Total: <span id="receiptGrandTotal">0.00</span></h4>
+          <p>Receipt ID: <span id="receiptId"></span></p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button class="btn btn-primary" id="printReceiptBtn">Print Receipt</button>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-
-  <script src="{{ url_for('static', filename='pos.js') }}"></script>
+<script src="{{ url_for('static', filename='pos.js') }}"></script>
 {% endblock %}
