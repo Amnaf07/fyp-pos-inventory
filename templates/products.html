@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Products{% endblock %}
+ 
+ 
+ {% block content %}
+  <h1 class="mt-4">Products</h1>
+  <p class="mb-4">Manage your inventory and keep track of stock levels.</p>
+ <!-- Current Stock -->
+  <h2 class="mt-5">Current Stock</h2>
+  <div class="input-group mb-3">
+    <span class="input-group-text"><i class="bi bi-search"></i></span>
+    <input type="text" id="searchBar" class="form-control" placeholder="Search products...">
+  </div>
+
+  <table class="table table-striped table-hover table-bordered shadow-sm">
+    <thead class="table-dark">
+      <tr>
+        <th>Product Name</th>
+        <th>Barcode</th>
+        <th>Price</th>
+        <th>Stock</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="productTable">
+      {% for product in products %}
+      <tr {% if product.stock < 5 %}class="table-danger"{% endif %}>
+        <td>{{ product.name }}</td>
+        <td>{{ product.barcode }}</td>
+        <td>{{ product.price }}</td>
+        <td>{{ product.stock }}</td>
+        <td>
+          <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editModal{{ product.id }}">
+            <i class="bi bi-pencil"></i> Edit
+          </button>
+          <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ product.id }}">
+            <i class="bi bi-trash"></i> Delete
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Action Buttons -->
+  <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addModal">
+    <i class="bi bi-plus-circle"></i> Add Product
+  </button>
+  <a href="{{ url_for('sales_history_paginated') }}" class="btn btn-info">
+    <i class="bi bi-receipt"></i> View Sales History
+  </a>
+  <a href="{{ url_for('admin.manage_users') }}" class="btn btn-secondary">
+    <i class="bi bi-people"></i> Manage Users
+  </a>
+
+  <script>
+    // Search filter
+    document.getElementById("searchBar").addEventListener("keyup", function() {
+      let filter = this.value.toLowerCase();
+      let rows = document.querySelectorAll("#productTable tr");
+      rows.forEach(row => {
+        let text = row.textContent.toLowerCase();
+        row.style.display = text.includes(filter) ? "" : "none";
+      });
+    });
+  </script>
+{% endblock %}

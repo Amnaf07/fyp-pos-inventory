@@ -1,47 +1,34 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, Blueprint
+from db import db
+from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import date, datetime, timedelta
 import json
+from models import User, Product, Sale, SaleItem
+from routes import admin, cashier
 
 # Import decorators
 from auth import login_required, role_required
 
 app = Flask(__name__)
-app.secret_key = "1234"
-
-# Database configuration
-
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-db = SQLAlchemy(app)
+db.init_app(app)
+migrate = Migrate(app, db)
 
-# Models
+app.secret_key = "1234"
 
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
-    password_hash = db.Column(db.String(200), nullable=False)
-    role = db.Column(db.String(20), nullable=False)
+# Register blueprints
+app.register_blueprint(admin.bp)
+app.register_blueprint(cashier.bp)
 
-class Product(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    barcode = db.Column(db.String(50), nullable=False)
-    price = db.Column(db.Float, nullable=False)
-    stock = db.Column(db.Integer, nullable=False)
-
-class Sale(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    date = db.Column(db.DateTime, default=datetime.utcnow)
-    total = db.Column(db.Float, nullable=False)
-    items = db.Column(db.Text, nullable=False)
 
 # Routes
 
-@app.route("/")
-def home():
+@app.route('/')
+def index():
     if "role" in session:
         # Redirect based on role
         if session["role"] == "Admin":
@@ -50,7 +37,9 @@ def home():
             return redirect(url_for("cashier_dashboard"))
         else:
             return redirect(url_for("dashboard"))
+    # If not logged in, show login page
     return redirect(url_for("login"))
+
 
 # Login Route
 @app.route("/login", methods=["GET", "POST"])
@@ -108,6 +97,37 @@ def register():
 
     return render_template("register.html")
 
+# Manage Users routes
+@app.route('/admin/users')
+def manage_users():
+    users = User.query.all()
+    return render_template('admin_users.html', users=users)
+
+@app.route('/admin/users/add', methods=['POST'])
+def add_user():
+    username = request.form['username']
+    password = request.form['password']
+    role = request.form['role']
+    hashed_pw = generate_password_hash(password)
+    new_user = User(username=username, password_hash=hashed_pw, role=role)
+    db.session.add(new_user)
+    db.session.commit()
+    return redirect(url_for('manage_users'))
+
+@app.route('/admin/users/edit/<int:user_id>', methods=['POST'])
+def edit_user(user_id):
+    user = User.query.get_or_404(user_id)
+    user.role = request.form['role']
+    db.session.commit()
+    return redirect(url_for('manage_users'))
+
+@app.route('/admin/users/delete/<int:user_id>', methods=['POST'])
+def delete_user(user_id):
+    user = User.query.get_or_404(user_id)
+    db.session.delete(user)
+    db.session.commit()
+    return redirect(url_for('manage_users'))
+
 # General Dashboard
 @app.route("/dashboard")
 @login_required
@@ -158,13 +178,6 @@ def cashier_dashboard():
     products = Product.query.all()
     return render_template("dashboard_cashier.html", products=products)
 
-#Sales History
-@app.route("/sales_history")
-@login_required
-@role_required("Admin")
-def sales_history():
-    sales = Sale.query.order_by(Sale.date.desc()).all()
-    return render_template("sales_history.html", sales=sales)
 
 # Logout Route
 @app.route("/logout")
@@ -244,12 +257,12 @@ def checkout():
     db.session.commit()
     return jsonify({"message": "Sale successful", "receipt_id": sale.id})
 
-@app.route("/products_table")
+@app.route("/products")
 @login_required
 @role_required("Admin")
 def products_table():
     products = Product.query.all()
-    return render_template("products_table.html", products=products)
+    return render_template("products.html", products=products)
 
 # Sales History (Admin only)
 @app.route("/sales_history")
@@ -263,63 +276,48 @@ def sales_history_paginated():
 
     start_date_str = request.args.get("start_date")
     end_date_str = request.args.get("end_date")
-    quick_filter = request.args.get("quick_filter")
-    query = Sale.query.order_by(Sale.date.desc())
+    query = Sale.query.order_by(Sale.created_at.desc())
 
-    # Quick filters
-    
-    if quick_filter == "today":
-        start_date = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
-        end_date = datetime.today().replace(hour=23, minute=59, second=59)
-        query = query.filter(Sale.date.between(start_date, end_date))
-    elif quick_filter == "7 days":
-        start_date = datetime.today() - timedelta(days=7)
-        end_date = datetime.today()
-        query = query.filter(Sale.date.between(start_date, end_date))
-    elif quick_filter == "30 days":
-        start_date = datetime.today() - timedelta(days=30)
-        end_date = datetime.today()
-        query = query.filter(Sale.date.between(start_date, end_date))
 
     # Manual date range
-    elif start_date_str and end_date_str:
+    if start_date_str and end_date_str:
         try:
             start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
             end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
-            query = query.filter(Sale.date.between(start_date, end_date))
+            query = query.filter(Sale.created_at.between(start_date, end_date))
         except ValueError:
             flash("Invalid date format. Please use YYYY-MM-DD.", "danger")
 
     sales = query.paginate(page=page, per_page=per_page)
 
     return render_template("sales_history.html", sales=sales.items, page=page,
-                           start_date=start_date_str, end_date=end_date_str, quick_filter=quick_filter)
+                           start_date=start_date_str, end_date=end_date_str)
 
-# # JSON parsing filter
-# @app.template_filter("loads")
-# def loads_filter(s):
-#     return json.loads(s)
+# JSON parsing filter
+@app.template_filter("loads")
+def loads_filter(s):
+    return json.loads(s)
 
-# # Stop caching
-# @app.after_request
-# def add_header(response):
-#     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-#     response.headers["Pragma"] = "no-cache"
-#     response.headers["Expires"] = "0"
-#     return response
+# Stop caching
+@app.after_request
+def add_header(response):
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
-# # Session timeout
-# @app.before_request
-# def check_session_timeout():
-#     session.permanent = True
-#     app.permanent_session_lifetime = timedelta(minutes=15)
-#     if "username" not in session and request.endpoint not in ("login", "register", "static"):
-#         return redirect(url_for("login"))
+# Session timeout
+@app.before_request
+def check_session_timeout():
+    session.permanent = True
+    app.permanent_session_lifetime = timedelta(minutes=15)
+    if "username" not in session and request.endpoint not in ("login", "register", "static"):
+        return redirect(url_for("login"))
 
 # -----------------------
 # Run App
 # -----------------------
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
+    # with app.app_context():
+    #     db.create_all()
     app.run(debug=True)

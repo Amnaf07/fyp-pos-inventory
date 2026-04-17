@@ -1,42 +1,45 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
-from sqlalchemy.orm import relationship
-from db import Base
-import datetime
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime, timezone
+from db import db
 
-class User(Base):
+
+class User(db.Model):
     __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, nullable=False)
-    password_hash = Column(String, nullable=False)
-    role = Column(String, nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String, unique=True, nullable=False)
+    password_hash = db.Column(db.String, nullable=False)
+    role = db.Column(db.String, nullable=False)
+    sales = db.relationship("Sale", back_populates="cashier")
 
-    sales = relationship("Sale", back_populates="cashier")
-
-class Product(Base):
+class Product(db.Model):
     __tablename__ = "products"
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
-    barcode = Column(String, unique=True, nullable=False)
-    price = Column(Float, nullable=False)
-    stock = Column(Integer, nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    barcode = db.Column(db.String, unique=True, nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    stock = db.Column(db.Integer, nullable=False)
+    sale_items = db.relationship("SaleItem", back_populates="product")
 
-    sale_items = relationship("SaleItem", back_populates="product")
+class SaleItem(db.Model):
+    __tablename__ = "sale_items"
+    id = db.Column(db.Integer, primary_key=True)
+    sale_id = db.Column(db.Integer, db.ForeignKey("sales.id"))
+    product_id = db.Column(db.Integer, db.ForeignKey("products.id"))
+    quantity = db.Column(db.Integer, nullable=False)
 
-class Sale(Base):
+    sale = db.relationship("Sale", back_populates="sale_items")
+    product = db.relationship("Product", back_populates="sale_items")
+
+class Sale(db.Model):
     __tablename__ = "sales"
-    id = Column(Integer, primary_key=True, index=True)
-    cashier_id = Column(Integer, ForeignKey("users.id"))
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    id = db.Column(db.Integer, primary_key=True)
+    cashier_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    date = db.Column(db.DateTime, default=datetime.utcnow)
+    total = db.Column(db.Float, nullable=False)
+    items = db.Column(db.Text, nullable=False)
 
-    cashier = relationship("User", back_populates="sales")
-    sale_items = relationship("SaleItem", back_populates="sale")
+    cashier = db.relationship("User", back_populates="sales")
+    sale_items = db.relationship("SaleItem", back_populates="sale")
 
-    class SaleItem(Base):
-        __tablename__ = "sale_items"
-        id = Column(Integer, primary_key=True, index=True)
-        sale_id = Column(Integer, ForeignKey("sales.id"))
-        product_id = Column(Integer, ForeignKey("products.id"))
-        quantity = Column(Integer, nullable=False)
 
-        sale = relationship("Sale", back_populates="sale_items")
-        product = relationship("Product", back_populates="sale_items")

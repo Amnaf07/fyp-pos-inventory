@@ -2,118 +2,36 @@
 {% block title %}Admin Dashboard{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-  <h1 class="text-center">Welcome Admin {{ session['username'] }}</h1>
-
-  <h2 class="mt-4">Current Stock</h2>
-
-  <!-- Search bar -->
-  <input type="text" id="searchBar" class="form-control mb-3" placeholder="Search products...">
-
-  <!-- Product Table -->
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>Product Name</th>
-        <th>Barcode</th>
-        <th>Price</th>
-        <th>Stock</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody id="productTable">
-      {% for product in products %}
-      <tr {% if product.stock < 5 %}class="table-danger"{% endif %}>
-        <td>{{ product.name }}</td>
-        <td>{{ product.barcode }}</td>
-        <td>{{ product.price }}</td>
-        <td>{{ product.stock }}</td>
-        <td>
-          <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editModal{{ product.id }}">Edit</button>
-          <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ product.id }}">Delete</button>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-
-  <!-- Add Product Button -->
-  <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addModal">Add Product</button>
-
-  <!-- Add Product Modal -->
-  <div class="modal fade" id="addModal" tabindex="-1">
-    <div class="modal-dialog">
-      <form method="POST" action="{{ url_for('add_product') }}">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Add Product</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            <input type="text" name="name" class="form-control mb-2" placeholder="Product Name" required>
-            <input type="text" name="barcode" class="form-control mb-2" placeholder="Barcode" required>
-            <input type="number" name="price" class="form-control mb-2" placeholder="Price" min="0" step="0.01" required>
-            <input type="number" name="stock" class="form-control mb-2" placeholder="Stock" required>
-          </div>
-          <div class="modal-footer">
-            <button type="submit" class="btn btn-success">Save</button>
-          </div>
+  <!-- KPI Cards -->
+  <div class="row mt-4 g-4">
+    <div class="col-md-4">
+      <div class="card text-center bg-primary text-white shadow-sm">
+        <div class="card-body">
+          <i class="bi bi-currency-dollar fs-2"></i>
+          <h5 class="card-title">Total Sales</h5>
+          <p class="card-text fs-4">{{ total_sales }}</p>
         </div>
-      </form>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-center bg-success text-white shadow-sm">
+        <div class="card-body">
+          <i class="bi bi-box-seam fs-2"></i>
+          <h5 class="card-title">Total Products</h5>
+          <p class="card-text fs-4">{{ total_products }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-center bg-danger text-white shadow-sm">
+        <div class="card-body">
+          <i class="bi bi-exclamation-triangle fs-2"></i>
+          <h5 class="card-title">Low Stock Items</h5>
+          <p class="card-text fs-4">{{ low_stock }}</p>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Edit/Delete Modals for each product -->
-  {% for product in products %}
-  <div class="modal fade" id="editModal{{ product.id }}" tabindex="-1">
-    <div class="modal-dialog">
-      <form method="POST" action="{{ url_for('edit_product', id=product.id) }}">
-        <div class="modal-content">
-          <div class="modal-header"><h5 class="modal-title">Edit Product</h5></div>
-          <div class="modal-body">
-            <input type="text" name="name" class="form-control mb-2" value="{{ product.name }}" required>
-            <input type="text" name="barcode" class="form-control mb-2" value="{{ product.barcode }}" required>
-            <input type="number" name="price" class="form-control mb-2" value="{{ product.price }}" min="0" step="0.01" required>
-            <input type="number" name="stock" class="form-control mb-2" value="{{ product.stock }}" min="0" step="1" required>
-          </div>
-          <div class="modal-footer">
-            <button type="submit" class="btn btn-primary">Save Changes</button>
-          </div>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <div class="modal fade" id="deleteModal{{ product.id }}" tabindex="-1">
-    <div class="modal-dialog">
-      <form method="POST" action="{{ url_for('delete_product', id=product.id) }}">
-        <div class="modal-content">
-          <div class="modal-header"><h5 class="modal-title">Delete Product</h5></div>
-          <div class="modal-body">
-            <p>Are you sure you want to delete <strong>{{ product.name }}</strong>?</p>
-          </div>
-          <div class="modal-footer">
-            <button type="submit" class="btn btn-danger">Delete</button>
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          </div>
-        </div>
-      </form>
-    </div>
-  </div>
-  {% endfor %}
-
-  <a href="{{ url_for('sales_history_paginated') }}" class="btn btn-info mt-3">View Sales History</a>
-</div>
-
-<script>
-  // Search filter
-  document.getElementById("searchBar").addEventListener("keyup", function() {
-    let filter = this.value.toLowerCase();
-    let rows = document.querySelectorAll("#productTable tr");
-    rows.forEach(row => {
-      let text = row.textContent.toLowerCase();
-      row.style.display = text.includes(filter) ? "" : "none";
-    });
-  });
-</script>
+ 
 {% endblock %}

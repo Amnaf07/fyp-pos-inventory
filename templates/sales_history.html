@@ -1,28 +1,15 @@
 {% extends "base.html" %}
 {% block title %}Sales History{% endblock %}
-
+from models import Sale
 {% block content %}
 <div class="container mt-4">
   <h2 class="text-center">Sales History</h2>
-
-  <!-- Date Range + Quick Filters -->
-  <form method="get" class="row mb-3">
-    <div class="col-md-3">
-      <input type="date" name="start_date" class="form-control"
-             value="{{ start_date if start_date else '' }}">
     </div>
     <div class="col-md-3">
       <input type="date" name="end_date" class="form-control"
              value="{{ end_date if end_date else '' }}">
     </div>
-    <div class="col-md-3">
-      <select name="filter" class="form-select">
-        <option value="">-- Quick Filter --</option>
-        <option value="today" {% if quick_filter == "today" %}selected{% endif %}>Today</option>
-        <option value="7days" {% if quick_filter == "7days" %}selected{% endif %}>Last 7 Days</option>
-        <option value="30days" {% if quick_filter == "30days" %}selected{% endif %}>Last 30 Days</option>
-      </select>
-    </div>
+    
     <div class="col-md-3">
       <button type="submit" class="btn btn-primary">Apply</button>
       <a href="{{ url_for('sales_history_paginated') }}" class="btn btn-secondary">Reset</a>
@@ -43,7 +30,7 @@
       {% for sale in sales %}
       <tr>
         <td>{{ sale.id }}</td>
-        <td>{{ sale.date.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+        <td>{{ sale.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
         <td>{{ "%.2f"|format(sale.total) }}</td>
         <td>
           <ul>
@@ -62,10 +49,10 @@
     <ul class="pagination justify-content-center">
       {% if page > 1 %}
         <li class="page-item"><a class="page-link"
-          href="{{ url_for('sales_history_paginated', page=page-1, start_date=start_date, end_date=end_date, filter=quick_filter) }}">Previous</a></li>
+          href="{{ url_for('sales_history_paginated', page=page-1, start_date=start_date, end_date=end_date, quick_filter=quick_filter) }}">Previous</a></li>
       {% endif %}
       <li class="page-item"><a class="page-link"
-        href="{{ url_for('sales_history_paginated', page=page+1, start_date=start_date, end_date=end_date, filter=quick_filter) }}">Next</a></li>
+        href="{{ url_for('sales_history_paginated', page=page+1, start_date=start_date, end_date=end_date, quick_filter=quick_filter) }}">Next</a></li>
     </ul>
   </nav>
 
