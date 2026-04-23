@@ -6,120 +6,132 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
-
   <style>
-    /* Desktop / Laptop */
-    .sidebar {
-      min-height: calc(100vh - 56px);
-      transition: transform 0.3s ease;
-    }
+   body { 
+    padding-top: 56px; 
+  } 
 
-    .main-content {
-      padding-top: 70px; /* clear navbar */
-      transition: margin-left 0.3s ease;
-    }
+  .layout{
+    display: flex;
+    min-height: calc(100vh-56px);
+  }
 
-    /* Mobile / Tablet */
+  .sidebar {
+     width: 220px;              /* fixed width */
+     background-color: #212529;
+     color: #fff;
+     padding: 1rem;
+     justify-content: space-between;
+     flex-direction: column;
+     min-height: calc(100vh-56px);
+     display: flex;
+     flex-direction: column;
+  }
+
+  .main-content { 
+    flex-grow: 1;
+    padding: 1rem; } 
+
     @media (max-width: 768px) {
-      .sidebar {
-        position: fixed;
+  .sidebar {
+    position: fixed;
         top: 56px;
         left: 0;
         width: 250px;
         height: calc(100vh - 56px);
-        background-color: #212529;
-        transform: translateX(-100%); /* hidden by default */
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
         z-index: 1050;
       }
-
-      .sidebar.active {
-        transform: translateX(0); /* slide in */
-      }
-
-      .main-content {
-        margin-left: 0; /* full width */
-      }
+  .sidebar.active { transform: translateX(0); }
+  .main-content{
+    flex-grow: 1;
+  }
     }
+
+    /* Active tab styling */
+.sidebar .nav-link.active {
+  background-color: #343a40; /* darker shade */
+  font-weight: bold;
+  border-radius: 4px;
+}
+
+/* Hover effect */
+.sidebar .nav-link:hover {
+  background-color: #495057; /* subtle lighter shade */
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.sidebar .nav {
+  position: relative;
+}
+
+/* Indicator bar */
+.sidebar .indicator {
+  position: absolute;
+  left: 0;
+  width: 4px;
+  background-color: #0d6efd; /* Bootstrap primary blue */
+  border-radius: 2px;
+  transition: top 0.3s ease, height 0.3s ease;
+}
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </head>
 <body>
   <!-- Navbar -->
-  {% if request.endpoint not in ['login', 'register'] %}
   <nav class="navbar navbar-expand-lg navbar-dark fixed-top bg-dark">
     <div class="container-fluid">
       <a class="navbar-brand" href="#">POS And IMS</a>
-
       {% if session.get('user_id') %}
         <button class="btn btn-outline-light d-md-none me-2" id="sidebarToggle">
           <i class="bi bi-list"></i>
         </button>
         <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
       {% endif %}
-
-      <div class="collapse navbar-collapse">
-        <ul class="navbar-nav me-auto">
-          {% if session.get('role') == 'Admin' %}
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.admin_dashboard') }}">Dashboard</a></li>
-          {% elif session.get('role') == 'Cashier' %}
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('cashier_dashboard') }}">Dashboard</a></li>
-          {% endif %}
-        </ul>
-      </div>
     </div>
   </nav>
-  {% endif %}
 
-  <!-- Flash messages -->
-  <div class="container mt-3">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-          </div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
-  </div>
-
-  <!-- Layout with Sidebar + Content -->
   <div class="container-fluid">
     <div class="row">
-      <!-- Sidebar (only here, not in child templates) -->
-      <nav class="col-md-3 col-lg-2 bg-dark sidebar text-white p-3">
+      <!-- Sidebar -->
+      {% if session.get('user_id') %}
+      <nav class="col-md-3 col-lg-2 sidebar text-white p-3">
         <h4 class="mb-4">Admin Panel</h4>
         <ul class="nav flex-column">
+          <div class="indicator"></div>
+          <li class="nav-item mb-2"><a class="nav-link text-white {% if request.endpoint == 'admin_dashboard' %}active{% endif %}"  href="{{ url_for('admin_dashboard') }}">
+             <i class="bi bi-speedometer2"></i>
+            Dashboard</a></li>
+
           <li class="nav-item mb-2">
-            <a class="nav-link text-white ajax-link" href="{{ url_for('admin.admin_dashboard') }}">
-              <i class="bi bi-speedometer2"></i> Dashboard
-            </a>
-          </li>
-          <li class="nav-item mb-2">
-            <a class="nav-link text-white ajax-link" href="{{ url_for('admin.manage_users') }}">
-              <i class="bi bi-people"></i> Manage Users
-            </a>
-          </li>
-          <li class="nav-item mb-2">
-            <a class="nav-link text-white ajax-link" href="{{ url_for('products_table') }}">
-              <i class="bi bi-box-seam"></i> Products
-            </a>
-          </li>
-          <li class="nav-item mb-2">
-            <a class="nav-link text-white ajax-link" href="{{ url_for('sales_history_paginated') }}">
-              <i class="bi bi-receipt"></i> Sales History
-            </a>
-          </li>
-          <li class="nav-item mb-2">
-            <a class="nav-link text-white" href="{{ url_for('logout') }}">
-              <i class="bi bi-box-arrow-right"></i> Logout
-            </a>
-          </li>
+          <a class="nav-link text-white {% if request.endpoint == 'manage_users' %}active{% endif %}" href="{{ url_for('manage_users') }}">
+            <i class="bi bi-people"></i>
+           Manage Users 
+        </a>
+      </li>
+         
+          <li class="nav-item mb-2"><a class="nav-link text-white {% if request.endpoint == 'products_table' %}active{% endif %}" href="{{ url_for('products_table') }}">
+            
+      <i class="bi bi-box-seam"></i>
+            Products</a></li>
+          <li class="nav-item mb-2"><a class="nav-link text-white {% if request.endpoint == 'sales_history_paginated' %}active{% endif %}" href="{{ url_for('sales_history_paginated') }}">
+            <i class="bi bi-receipt"></i>
+            Sales History</a></li>
+          
+
+
+          <li class="nav-item mb-2"><a class="nav-link text-white {% if request.endpoint == 'logout' %}active{% endif %}" href="{{ url_for('logout') }}">
+            <i class="bi bi-box-arrow-right"></i>
+            Logout</a></li>
         </ul>
       </nav>
+      {% endif %}
 
       <!-- Main Content -->
-      <main class="col-md-9 col-lg-10 px-4 main-content" id="content-area">
+      <main class="{% if session.get('user_id') %}col-md-9 col-lg-10{% else %}col-12{% endif %} px-4 main-content" id="content-area">
         {% block content %}{% endblock %}
       </main>
     </div>
@@ -129,35 +141,36 @@
   <script>
     const toggleBtn = document.getElementById("sidebarToggle");
     const sidebar = document.querySelector(".sidebar");
-
     toggleBtn?.addEventListener("click", () => {
       sidebar.classList.toggle("active");
     });
 
-    // AJAX navigation
-    document.addEventListener("DOMContentLoaded", function() {
-      document.querySelectorAll(".ajax-link").forEach(link => {
-        link.addEventListener("click", function(e) {
-          e.preventDefault();
-          const url = this.getAttribute("href");
+  function moveIndicator() {
+    const activeLink = document.querySelector(".sidebar .nav-link.active");
+    const indicator = document.querySelector(".sidebar .indicator");
+    if (activeLink && indicator) {
+      const linkRect = activeLink.getBoundingClientRect();
+      const navRect = activeLink.parentElement.parentElement.getBoundingClientRect();
+      indicator.style.top = (linkRect.top - navRect.top) + "px";
+      indicator.style.height = linkRect.height + "px";
+    }
+  }
 
-          fetch(url)
-            .then(response => response.text())
-            .then(html => {
-              const parser = new DOMParser();
-              const doc = parser.parseFromString(html, "text/html");
-              const newContent = doc.querySelector("#content-area").innerHTML;
-              document.querySelector("#content-area").innerHTML = newContent;
-              window.history.pushState({}, "", url);
-            })
-            .catch(err => console.error("Error loading content:", err));
-        });
-      });
+  // Run on page load
+  window.addEventListener("DOMContentLoaded", moveIndicator);
 
-      window.addEventListener("popstate", function() {
-        location.reload();
-      });
+  // Run again when resizing
+  window.addEventListener("resize", moveIndicator);
+
+  // Optional: run when clicking links
+  document.querySelectorAll(".sidebar .nav-link").forEach(link => {
+    link.addEventListener("click", () => {
+      document.querySelectorAll(".sidebar .nav-link").forEach(l => l.classList.remove("active"));
+      link.classList.add("active");
+      moveIndicator();
     });
+  });
+
   </script>
 </body>
 </html>

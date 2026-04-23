@@ -5,8 +5,9 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import date, datetime, timedelta
 import json
-from models import User, Product, Sale, SaleItem
+from models import User, Product, Sale, SaleItem, Expense
 from routes import admin, cashier
+from sqlalchemy import func 
 
 # Import decorators
 from auth import login_required, role_required
@@ -144,10 +145,8 @@ def dashboard():
 # Admin Dashboard
 @app.route("/admin_dashboard")
 @login_required
-@role_required("Admin") 
-
+@role_required("Admin")
 def admin_dashboard():
-
     # Get all products
     products = Product.query.all()
 
@@ -156,17 +155,67 @@ def admin_dashboard():
     total_products = Product.query.count()
     low_stock = Product.query.filter(Product.stock < 5).count()
 
-    #Fetch low stock products list
+    # Fetch low stock products list
     low_stock_products = Product.query.filter(Product.stock < 5).all()
 
+    # --- Monthly Sales Data ---
+    results_sales = (
+        db.session.query(
+            db.func.strftime("%m", Sale.date).label("month"),   # SQLite
+            db.func.sum(Sale.total).label("total")
+        )
+        .group_by("month")
+        .order_by("month")
+        .all()
+    )
+
+    # --- Monthly Expenses Data ---
+    results_expenses = (
+        db.session.query(
+            db.func.strftime("%m", Expense.date).label("month"),   # SQLite
+            db.func.sum(Expense.amount).label("total")
+        )
+        .group_by("month")
+        .order_by("month")
+        .all()
+    )
+
+    import calendar
+    # Convert month numbers into names (Jan, Feb, Mar…)
+    sales_labels = []
+    sales_data = []
+    expenses_data = []
+    profit_data = []
+
+    if results_sales:
+        sales_labels = [calendar.month_abbr[int(r.month)] for r in results_sales]
+    sales_data   = [float(r.total) for r in results_sales]
+
+    if results_expenses:
+        expenses_data = [float(r.total) for r in results_expenses]
+
+    if sales_data and expenses_data:
+        profit_data = [s - e for s, e in zip(sales_data, expenses_data)]
+
+    print("results_sales:", results_sales)
+    print("results_expenses:", results_expenses)
+    
+
     return render_template(
+        
         "dashboard_admin.html",
         products=products,
-        total_sales=total_sales,
+        total_sales=sum(sales_data),
         total_products=total_products,
         low_stock=low_stock,
-        low_stock_products=low_stock_products
+        low_stock_products=low_stock_products,
+        sales_labels=sales_labels,     # pass to template
+        sales_data=sales_data,         # pass to template
+        expenses_data=expenses_data,    # pass to template
+        profit_data=profit_data         # pass to template  
     )
+
+
 
 
 # Cashier Dashboard

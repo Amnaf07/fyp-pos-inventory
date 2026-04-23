@@ -42,4 +42,11 @@ class Sale(db.Model):
     cashier = db.relationship("User", back_populates="sales")
     sale_items = db.relationship("SaleItem", back_populates="sale")
 
+class Expense(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    amount = db.Column(db.Float, nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    description = db.Column(db.String(255))
+
+
 

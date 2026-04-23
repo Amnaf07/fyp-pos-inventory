@@ -2,36 +2,137 @@
 {% block title %}Admin Dashboard{% endblock %}
 
 {% block content %}
-  <!-- KPI Cards -->
-  <div class="row mt-4 g-4">
-    <div class="col-md-4">
-      <div class="card text-center bg-primary text-white shadow-sm">
-        <div class="card-body">
-          <i class="bi bi-currency-dollar fs-2"></i>
-          <h5 class="card-title">Total Sales</h5>
-          <p class="card-text fs-4">{{ total_sales }}</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card text-center bg-success text-white shadow-sm">
-        <div class="card-body">
-          <i class="bi bi-box-seam fs-2"></i>
-          <h5 class="card-title">Total Products</h5>
-          <p class="card-text fs-4">{{ total_products }}</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card text-center bg-danger text-white shadow-sm">
-        <div class="card-body">
-          <i class="bi bi-exclamation-triangle fs-2"></i>
-          <h5 class="card-title">Low Stock Items</h5>
-          <p class="card-text fs-4">{{ low_stock }}</p>
-        </div>
+<div class="row mt-4 g-4">
+  <!-- Total Sales -->
+  <div class="col-12 col-sm-6 col-lg-4">
+    <div class="card text-center shadow-sm border-0">
+      <div class="card-body bg-primary text-white rounded">
+        <i class="bi bi-currency-dollar fs-2 mb-2"></i>
+        <h5 class="card-title">Total Sales</h5>
+        <p class="card-text fs-4 mb-0">{{ total_sales }}</p>
       </div>
     </div>
   </div>
 
- 
+  <!-- Total Products -->
+  <div class="col-12 col-sm-6 col-lg-4">
+    <div class="card text-center shadow-sm border-0">
+      <div class="card-body bg-success text-white rounded">
+        <i class="bi bi-box-seam fs-2 mb-2"></i>
+        <h5 class="card-title">Total Products</h5>
+        <p class="card-text fs-4 mb-0">{{ total_products }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Low Stock Items -->
+  <div class="col-12 col-sm-6 col-lg-4">
+    <div class="card text-center shadow-sm border-0">
+      <div class="card-body bg-danger text-white rounded">
+        <i class="bi bi-exclamation-triangle fs-2 mb-2"></i>
+        <h5 class="card-title">Low Stock Items</h5>
+        <p class="card-text fs-4 mb-0">{{ low_stock }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-5">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Sales Trend</h5>
+        {% if not sales_data %}
+     <p class="text-muted">No sales data available yet.</p>
+    {% endif %}
+        <canvas id="salesChart" height="100"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+
+<script id="chart-data" type="application/json">
+  {
+   "labels": {{ sales_labels|tojson|safe }},
+  "sales": {{ sales_data|tojson|safe }},
+  "expenses": {{ expenses_data|tojson|safe }},
+  "profit": {{ profit_data|tojson|safe }}
+  }
+</script>
+
+<script>
+
+  
+
+  const chartData = JSON.parse(document.getElementById('chart-data').textContent);
+  
+  const ctx = document.getElementById('salesChart').getContext('2d');
+
+  const salesChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: chartData.labels,
+      datasets: [
+        {
+          label: 'Sales',
+          data: chartData.sales,
+          borderColor: 'blue',
+          backgroundColor: 'rgba(0, 0, 255, 0.2)', // translucent fill
+          tension: 0.3, // smooth curve
+          pointBackgroundColor: 'white',
+          pointBorderColor: 'blue',
+          pointRadius: 4,
+          fill: true
+        },
+        {
+          label: 'Expenses',
+          data: chartData.expenses,
+          borderColor: 'red',
+          backgroundColor: 'rgba(255, 0, 0, 0.2)',
+          tension: 0.3,
+          pointBackgroundColor: 'white',
+          pointBorderColor: 'red',
+          pointRadius: 4,
+          fill: true
+        },
+        {
+        label: 'Profit',
+        data: chartData.profit,
+        borderColor: 'green',
+        backgroundColor: 'rgba(0,255,0,0.2)',
+        tension: 0.3,
+        fill: true
+      }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { boxWidth: 12 }
+        },
+        title: {
+          display: true,
+          text: 'Monthly Sales, Expenses  and Profit',
+          font: { size: 18 }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 500 }
+        }
+      }
+    }
+  });
+</script>
+
+
 {% endblock %}
+
+
+
