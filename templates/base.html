@@ -9,11 +9,13 @@
   <style>
    body { 
     padding-top: 56px; 
+    height: 100vh;
+    margin: 0%;
   } 
 
   .layout{
     display: flex;
-    min-height: calc(100vh-56px);
+    min-height: calc(100vh - 56px);
   }
 
   .sidebar {
@@ -21,16 +23,17 @@
      background-color: #212529;
      color: #fff;
      padding: 1rem;
-     justify-content: space-between;
      flex-direction: column;
-     min-height: calc(100vh-56px);
      display: flex;
-     flex-direction: column;
+     height: 100vh;
+     
   }
 
   .main-content { 
     flex-grow: 1;
-    padding: 1rem; } 
+    padding: 1rem;
+    overflow-y: auto; 
+   } 
 
     @media (max-width: 768px) {
   .sidebar {
