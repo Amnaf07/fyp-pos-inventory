@@ -146,6 +146,7 @@ def dashboard():
 @app.route("/admin_dashboard")
 @login_required
 @role_required("Admin")
+
 def admin_dashboard():
     # Get all products
     products = Product.query.all()
@@ -180,6 +181,22 @@ def admin_dashboard():
         .all()
     )
 
+    # --- Top Products Data ---
+    product_results = (
+        db.session.query(
+            Product.name,
+            func.sum(Product.price * SaleItem.quantity).label("total"))
+        .join(SaleItem, SaleItem.product_id == Product.id)
+        .group_by(Product.name)
+        .order_by(func.sum(Product.price * SaleItem.quantity).desc())
+        .limit(5)   # top 5 products
+        .all()
+    )
+
+    product_names = [r[0] for r in product_results]
+    product_sales = [float(r[1]) for r in product_results]
+
+
     import calendar
     # Convert month numbers into names (Jan, Feb, Mar…)
     sales_labels = []
@@ -196,9 +213,6 @@ def admin_dashboard():
 
     if sales_data and expenses_data:
         profit_data = [s - e for s, e in zip(sales_data, expenses_data)]
-
-    print("results_sales:", results_sales)
-    print("results_expenses:", results_expenses)
     
 
     return render_template(
@@ -209,11 +223,24 @@ def admin_dashboard():
         total_products=total_products,
         low_stock=low_stock,
         low_stock_products=low_stock_products,
-        sales_labels=sales_labels,     # pass to template
-        sales_data=sales_data,         # pass to template
-        expenses_data=expenses_data,    # pass to template
-        profit_data=profit_data         # pass to template  
+        sales_labels=sales_labels,    
+        sales_data=sales_data,        
+        expenses_data=expenses_data,   
+        profit_data=profit_data,
+        product_names=product_names,
+        product_sales=product_sales
     )
+
+# Restock product route  
+
+@app.route('/restock/<int:product_id>', methods=['POST'])
+def restock_product(product_id):
+    product = Product.query.get_or_404(product_id)
+    quantity = int(request.form.get('quantity', 10))  # default 10
+    product.stock += quantity
+    db.session.commit()
+    flash(f"{product.name} has been restocked by {quantity} units.", "success")
+    return redirect(url_for('admin_dashboard'))
 
 
 

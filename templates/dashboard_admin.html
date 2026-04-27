@@ -45,7 +45,6 @@
         {% if not sales_data %}
      <p class="text-muted">No sales data available yet.</p>
     {% endif %}
-        <canvas id="salesChart" height="100"></canvas>
         <canvas id="financeChart" height="100"></canvas>
       </div>
     </div>
@@ -53,90 +52,133 @@
 
 </div>
 
+<div class="row mt-5">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Top Products</h5>
+        <canvas id="productChart" height="100"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-5">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Low Stock Products</h5>
+        {% if low_stock_products %}
+          <table class="table table-striped table-hover">
+            <thead class="table-danger">
+              <tr>
+                <th scope="col">Product Name</th>
+                <th scope="col">Barcode</th>
+                <th scope="col">Stock Status</th>
+                <th scope="col">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for product in low_stock_products %}
+              <tr>
+                <td>{{ product.name }}</td>
+                <td>{{ product.barcode }}</td>
+                <td>
+                  {% if product.stock == 0 %}
+                    <span class="badge bg-danger">Critical</span>
+                  {% elif product.stock < 5 %}
+                    <span class="badge bg-warning text-dark">Low ({{ product.stock }})</span>
+                  {% else %}
+                    <span class="badge bg-success">{{ product.stock }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <form action="{{ url_for('restock_product', product_id=product.id) }}" method="post">
+                  <button type="submit" class="btn btn-sm btn-outline-primary">Restock</button>
+                  </form>
+
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p class="text-muted">No products are currently low in stock.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+
 
 
 <script id="chart-data" type="application/json">
-  {
-   "labels": {{ sales_labels|tojson|safe }},
-  "sales": {{ sales_data|tojson|safe }},
-  "expenses": {{ expenses_data|tojson|safe }},
-  "profit": {{ profit_data|tojson|safe }}
-  }
-  
-  
+{
+  "labels": {{ sales_labels|tojson }},
+  "sales": {{ sales_data|tojson }},
+  "expenses": {{ expenses_data|tojson }},
+  "profit": {{ profit_data|tojson }},
+  "product_names": {{ product_names|tojson }},
+  "product_sales": {{ product_sales|tojson }}
+}
 </script>
-<script>
 
+<script>
+  // Parse JSON data passed from Flask
   const chartData = JSON.parse(document.getElementById('chart-data').textContent);
+
+  // Finance Chart (Sales, Expenses, Profit)
   const ctxFinance = document.getElementById('financeChart').getContext('2d');
-  const financeChart = new Chart(ctxFinance, {
+  new Chart(ctxFinance, {
     type: 'line',
     data: {
       labels: chartData.labels,
       datasets: [
-        {
-          label: 'Sales',
-          data: chartData.sales,
-          borderColor: '#0d6efd',
-          backgroundColor: 'rgba(13, 110, 253, 0.2)',
-          tension: 0.3,
-          pointBackgroundColor: 'white',
-          pointBorderColor: '#0d6efd',
-          pointRadius: 4,
-          fill: true
-        },
-        {
-          label: 'Expenses',
-          data: chartData.expenses,
-          borderColor: '#dc3545',
-          backgroundColor: 'rgba(220, 53, 69, 0.2)',
-          tension: 0.3,
-          pointBackgroundColor: 'white',
-          pointBorderColor: '#dc3545',
-          pointRadius: 4,
-          fill: true
-        },
-        {
-          label: 'Profit',
-          data: chartData.profit,
-          borderColor: '#198754',
-          backgroundColor: 'rgba(25, 135, 84, 0.2)',
-          tension: 0.3,
-          pointBackgroundColor: 'white',
-          pointBorderColor: '#198754',
-          pointRadius: 4,
-          fill: true
-        }
+        { label: 'Sales', data: chartData.sales, borderColor: '#0d6efd', backgroundColor: 'rgba(13,110,253,0.2)', fill: true },
+        { label: 'Expenses', data: chartData.expenses, borderColor: '#dc3545', backgroundColor: 'rgba(220,53,69,0.2)', fill: true },
+        { label: 'Profit', data: chartData.profit, borderColor: '#198754', backgroundColor: 'rgba(25,135,84,0.2)', fill: true }
       ]
     },
     options: {
       responsive: true,
       plugins: {
-        legend: {
-          position: 'bottom',
-          labels: { boxWidth: 12 }
-        },
-        title: {
-          display: true,
-          text: 'Monthly Sales, Expenses & Profit',
-          font: { size: 18 }
-        }
+        title: { display: true, text: 'Monthly Sales, Expenses & Profit', font: { size: 18 } }
+      }
+    }
+  });
+
+  // Product Chart (Top Products)
+  const ctxProducts = document.getElementById('productChart').getContext('2d');
+  new Chart(ctxProducts, {
+    type: 'bar',
+    data: {
+      labels: chartData.product_names,
+      datasets: [{
+        label: 'Revenue (PKR)',
+        data: chartData.product_sales,
+        backgroundColor: '#0d6efd',
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        title: { display: true, text: 'Top Products by Revenue', font: { size: 18 } }
       },
       scales: {
         y: {
           beginAtZero: true,
           ticks: {
-            callback: function(value) {
-              return 'PKR ' + value.toLocaleString();
-            }
+            callback: value => 'PKR ' + value.toLocaleString()
           }
         }
       }
     }
   });
-
-  
 </script>
+
+
 
 
 
