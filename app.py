@@ -8,6 +8,7 @@ import json
 from models import User, Product, Sale, SaleItem, Expense
 from routes import admin, cashier
 from sqlalchemy import func 
+import calendar
 
 # Import decorators
 from auth import login_required, role_required
@@ -35,7 +36,7 @@ def index():
         if session["role"] == "Admin":
             return redirect(url_for("admin_dashboard"))
         elif session["role"] == "Cashier":
-            return redirect(url_for("cashier_dashboard"))
+            return redirect(url_for("dashboard_cashier"))
         else:
             return redirect(url_for("dashboard"))
     # If not logged in, show login page
@@ -61,7 +62,7 @@ def login():
             if user.role == "Admin":
                 return redirect(url_for("admin_dashboard"))
             elif user.role == "Cashier":
-                return redirect(url_for("cashier_dashboard"))
+                return redirect(url_for("dashboard_cashier"))
             else:
                 return redirect(url_for("dashboard"))
         else:
@@ -129,18 +130,6 @@ def delete_user(user_id):
     db.session.commit()
     return redirect(url_for('manage_users'))
 
-# General Dashboard
-@app.route("/dashboard")
-@login_required
-def dashboard():
-    total_sales = db.session.query(db.func.sum(Sale.total)).scalar() or 0
-    total_products = Product.query.count()
-    low_stock = Product.query.filter(Product.stock < 5).count()
-
-    return render_template("dashboard.html",
-                           total_sales=total_sales,
-                           total_products=total_products,
-                           low_stock=low_stock)
 
 # Admin Dashboard
 @app.route("/admin_dashboard")
@@ -182,27 +171,43 @@ def admin_dashboard():
     )
 
     # --- Top Products Data ---
-    product_results = (
-        db.session.query(
-            Product.name,
-            func.sum(Product.price * SaleItem.quantity).label("total"))
-        .join(SaleItem, SaleItem.product_id == Product.id)
-        .group_by(Product.name)
-        .order_by(func.sum(Product.price * SaleItem.quantity).desc())
-        .limit(5)   # top 5 products
-        .all()
-    )
 
+    try:
+        product_results = (
+            db.session.query(
+                Product.name,
+                db.func.sum(SaleItem.quantity * SaleItem.price).label("total")
+            )
+            .select_from(SaleItem)
+            .join(Product, SaleItem.product_id == Product.id)
+            .group_by(Product.id)
+            .order_by(func.sum(SaleItem.quantity * SaleItem.price).desc())
+            .limit(5)
+            .all()
+        )
+        print ("Top Products:", product_results)
+
+    except Exception as e:
+        print("Query failed:", e)
+
+
+
+    # Build dicts keyed by month
+    sales_dict = {int(r.month): float(r.total) for r in results_sales}
+    expenses_dict = {int(r.month): float(r.total) for r in results_expenses}
+
+    # Union of months
+    all_months = sorted(set(sales_dict.keys()) | set(expenses_dict.keys()))
     product_names = [r[0] for r in product_results]
     product_sales = [float(r[1]) for r in product_results]
 
+    print("Top Products:", product_results)
 
-    import calendar
-    # Convert month numbers into names (Jan, Feb, Mar…)
-    sales_labels = []
-    sales_data = []
-    expenses_data = []
-    profit_data = []
+
+    sales_labels = [calendar.month_abbr[m] for m in all_months]
+    sales_data = [sales_dict.get(m, 0) for m in all_months]
+    expenses_data = [expenses_dict.get(m, 0) for m in all_months]
+    profit_data = [s - e for s, e in zip(sales_data, expenses_data)]
 
     if results_sales:
         sales_labels = [calendar.month_abbr[int(r.month)] for r in results_sales]
@@ -219,7 +224,7 @@ def admin_dashboard():
         
         "dashboard_admin.html",
         products=products,
-        total_sales=sum(sales_data),
+        total_sales=round(total_sales,2),
         total_products=total_products,
         low_stock=low_stock,
         low_stock_products=low_stock_products,
@@ -249,7 +254,7 @@ def restock_product(product_id):
 @app.route("/cashier_dashboard")
 @login_required
 @role_required("Cashier")
-def cashier_dashboard():
+def dashboard_cashier():
 
     products = Product.query.all()
     return render_template("dashboard_cashier.html", products=products)
@@ -307,8 +312,10 @@ def delete_product(id):
 def checkout():
     data = request.get_json()
     cart = data.get("cart", [])
+    customer_id = data.get("customer_id") or DEFAULT_CUSTOMER_ID
+    cashier_id = session.get("user_id")
 
-    # Validate stock before calculating total
+    # Validate stock
     for item in cart:
         product = Product.query.get(item["id"])
         if not product:
@@ -322,7 +329,12 @@ def checkout():
     total = sum(item["qty"] * float(item["price"]) for item in cart)
 
     # Save sale
-    sale = Sale(total=total, items=json.dumps(cart))
+    sale = Sale(
+        total=total,
+        items=json.dumps(cart),
+        cashier_id=cashier_id,
+        customer_id=customer_id
+    )
     db.session.add(sale)
 
     # Update stock
@@ -331,7 +343,74 @@ def checkout():
         product.stock -= item["qty"]
 
     db.session.commit()
-    return jsonify({"message": "Sale successful", "receipt_id": sale.id})
+
+    # Fetch customer name
+    customer = Customer.query.get(customer_id)
+    customer_name = customer.name if customer else "Walk-in"
+
+    return jsonify({
+        "message": "Sale successful",
+        "receipt_id": sale.id,
+        "total": total,
+        "customer_name": customer_name
+    })
+
+
+#Cashier new sale 
+@app.route("/new_sale", methods=["GET", "POST"])
+@login_required
+@role_required("Cashier")
+def new_sale():
+    products = Product.query.all()
+    customers = Customer.query.all()
+
+    if request.method == "POST":
+        cashier_id = session.get("user_id")
+        customer_id = request.form.get("customer_id") or DEFAULT_CUSTOMER_ID
+
+        sale = Sale(cashier_id=cashier_id, customer_id=customer_id)
+        db.session.add(sale)
+        db.session.commit()
+
+        flash("Sale created successfully!", "success")
+        return redirect(url_for("cashier_sales_history"))
+
+    return render_template(
+        "new_sale.html",
+        products=products,
+        customers=customers,
+        DEFAULT_CUSTOMER_ID=DEFAULT_CUSTOMER_ID
+    )
+
+
+
+#cashier sales history
+
+@app.route("/cashier_sales_history")
+@login_required
+@role_required("Cashier")
+def cashier_sales_history():
+    page = request.args.get("page", 1, type=int)
+
+    cashier_id = session.get("user_id")
+    sales = (Sale.query
+                  .filter_by(cashier_id=cashier_id)
+                  .order_by(Sale.date.desc())
+                  .paginate(page=page, per_page=10))
+
+    return render_template("cashier_sales_history.html",
+                           sales=sales.items,
+                           page=page,
+                           pagination=sales)
+
+
+
+
+
+
+
+
+
 
 @app.route("/products")
 @login_required
@@ -369,6 +448,11 @@ def sales_history_paginated():
     return render_template("sales_history.html", sales=sales.items, page=page,
                            start_date=start_date_str, end_date=end_date_str)
 
+
+
+
+
+
 # JSON parsing filter
 @app.template_filter("loads")
 def loads_filter(s):
@@ -394,6 +478,15 @@ def check_session_timeout():
 # Run App
 # -----------------------
 if __name__ == "__main__":
-    # with app.app_context():
-    #     db.create_all()
+    with app.app_context():
+        # Ensure Walk-in customer exists
+        from models import Customer
+        default_customer = Customer.query.filter_by(name="Walk-in").first()
+        if not default_customer:
+            default_customer = Customer(name="Walk-in", phone=None)
+            db.session.add(default_customer)
+            db.session.commit()
+        DEFAULT_CUSTOMER_ID = default_customer.id
+
     app.run(debug=True)
+

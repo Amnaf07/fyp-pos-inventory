@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="row mt-4 g-4">
-  <!-- Total Sales -->
+      <!-- Total Sales -->
   <div class="col-12 col-sm-6 col-lg-4">
     <div class="card text-center shadow-sm border-0">
       <div class="card-body bg-primary text-white rounded">
@@ -23,7 +23,7 @@
         <p class="card-text fs-4 mb-0">{{ total_products }}</p>
       </div>
     </div>
-  </div>
+  </div> 
 
   <!-- Low Stock Items -->
   <div class="col-12 col-sm-6 col-lg-4">
@@ -35,33 +35,30 @@
       </div>
     </div>
   </div>
-</div>
+</div> 
 
-<div class="row mt-5">
-  <div class="col-12">
-    <div class="card shadow-sm">
+<div class="row mt-4">
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
       <div class="card-body">
         <h5 class="card-title">Sales Trend</h5>
-        {% if not sales_data %}
-     <p class="text-muted">No sales data available yet.</p>
-    {% endif %}
-        <canvas id="financeChart" height="100"></canvas>
+          <canvas id="financeChart" style="height: 300px;"></canvas>
+        </div>
       </div>
     </div>
-  </div>
+  
 
-</div>
-
-<div class="row mt-5">
-  <div class="col-12">
-    <div class="card shadow-sm">
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
       <div class="card-body">
         <h5 class="card-title">Top Products</h5>
-        <canvas id="productChart" height="100"></canvas>
+          <canvas id="productChart" style="height: 300px;"></canvas>
+        </div>
       </div>
     </div>
-  </div>
-</div>
+  </div> 
+
+
 
 <div class="row mt-5">
   <div class="col-12">
@@ -93,11 +90,32 @@
                   {% endif %}
                 </td>
                 <td>
-                  <form action="{{ url_for('restock_product', product_id=product.id) }}" method="post">
-                  <button type="submit" class="btn btn-sm btn-outline-primary">Restock</button>
-                  </form>
-
+                  <button type="submit" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#restockModal{{ product.id }}">Restock</button>
+                 
                 </td>
+                <!-- Restock Modal -->
+ <div class="modal fade" id="restockModal{{ product.id }}" tabindex="-1" aria-labelledby="restockModalLabel{{ product.id }}" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="{{ url_for('restock_product', product_id=product.id) }}" method="post">
+        <div class="modal-header">
+          <h5 class="modal-title" id="restockModalLabel{{ product.id }}">Restock {{ product.name }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="quantity{{ product.id }}" class="form-label">Quantity to Add</label>
+            <input type="number" class="form-control" id="quantity{{ product.id }}" name="quantity" min="1" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#restockModal{{ product.id }}">Restock</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
               </tr>
               {% endfor %}
             </tbody>
@@ -109,6 +127,7 @@
     </div>
   </div>
 </div>
+
 
 
 
@@ -176,7 +195,7 @@
       }
     }
   });
-</script>
+</script> 
 
 
 

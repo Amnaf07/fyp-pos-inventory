@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}New Sale{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="text-center">New Sale</h2>
+
+  <div class="row mt-4">
+    <!-- Product Search -->
+    <div class="col-md-6">
+      <h4>Search Products</h4>
+      <input type="text" id="searchBar" class="form-control mb-3" placeholder="Search products...">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Name</th><th>Barcode</th><th>Price</th><th>Stock</th><th>Add</th>
+          </tr>
+        </thead>
+        <tbody id="productsTable">
+          {% for product in products %}
+          <tr>
+            <td>{{ product.name }}</td>
+            <td>{{ product.barcode }}</td>
+            <td>{{ product.price }}</td>
+            <td>{{ product.stock }}</td>
+            <td>
+              <button class="btn btn-sm btn-success add-to-cart"
+                      data-id="{{ product.id }}"
+                      data-name="{{ product.name }}"
+                      data-price="{{ product.price }}"
+                      {% if product.stock == 0 %}disabled{% endif %}>
+                Add
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Customer Selection -->
+<div class="col-md-12 mb-4">
+  <h4>Select Customer</h4>
+  <form id="customerForm" method="POST" action="{{ url_for('new_sale') }}">
+    <div class="form-group">
+      <label for="customer_id">Customer</label>
+      <select class="form-control" id="customer_id" name="customer_id">
+        <!-- Default Walk-in -->
+        <option value="{{ DEFAULT_CUSTOMER_ID }}">Walk-in</option>
+        <!-- Loop through customers -->
+        {% for customer in customers %}
+          <option value="{{ customer.id }}">{{ customer.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </form>
+</div>
+
+    <!-- Cart -->
+    <div class="col-md-6">
+      <h4>Shopping Cart</h4>
+      <table class="table table-bordered" id="cartTable">
+        <thead>
+          <tr><th>Product</th><th>Qty</th><th>Price</th><th>Total</th><th>Remove</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <h5 class="mt-3">Grand Total: <span id="grandTotal">0.00</span></h5>
+      <button class="btn btn-primary mt-3" id="checkoutBtn">Checkout</button>
+    </div>
+  </div>
+
+  <!-- Receipt Modal -->
+  <div class="modal fade" id="receiptModal" tabindex="-1" aria-labelledby="receiptModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Receipt</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <table class="table table-bordered">
+            <thead>
+              <tr><th>Name</th><th>Qty</th><th>Price</th><th>Total</th></tr>
+            </thead>
+            <tbody id="receiptTableBody"></tbody>
+          </table>
+          <h4>Grand Total: <span id="receiptGrandTotal">0.00</span></h4>
+          <p>Customer: <span id="receiptCustomer"></span></p>
+
+          <p>Receipt ID: <span id="receiptId"></span></p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button class="btn btn-primary" id="printReceiptBtn">Print Receipt</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='pos.js') }}"></script>
+{% endblock %}
