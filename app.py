@@ -255,9 +255,28 @@ def restock_product(product_id):
 @login_required
 @role_required("Cashier")
 def dashboard_cashier():
+    cashier_id = session.get("user_id")
 
+    # All products (if you want to show inventory)
     products = Product.query.all()
-    return render_template("dashboard_cashier.html", products=products)
+
+    # Today's sales total for this cashier
+    today = datetime.utcnow().date()
+    total_sales_today = db.session.query(func.sum(Sale.total))\
+        .filter(func.date(Sale.date) == today, Sale.cashier_id == cashier_id)\
+        .scalar() or 0
+
+    # Recent 10 sales for this cashier
+    recent_sales = Sale.query.filter_by(cashier_id=cashier_id)\
+        .order_by(Sale.date.desc())\
+        .limit(10).all()
+
+    return render_template(
+        "dashboard_cashier.html",
+        products=products,
+        total_sales_today=total_sales_today,
+        recent_sales=recent_sales
+    )
 
 
 # Logout Route

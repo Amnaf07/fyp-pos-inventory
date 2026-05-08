@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Search
   document.getElementById("searchBar").addEventListener("keyup", function() {
   let filter = this.value.toLowerCase();
-  let rows = document.querySelectorAll("#productTable tr");
+  let rows = document.querySelectorAll("#productsTable tr");
   rows.forEach(row => {
     let text = row.textContent.toLowerCase();
     row.style.display = text.includes(filter) ? "" : "none";
@@ -181,47 +181,5 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-document.getElementById("checkoutBtn").addEventListener("click", function () {
-    const cart = [];
-    document.querySelectorAll("#cartTable tbody tr").forEach(row => {
-        const id = row.dataset.id;
-        const qty = parseInt(row.querySelector(".qty").textContent);
-        const price = parseFloat(row.querySelector(".price").textContent);
-        const name = row.querySelector(".name").textContent;
 
-        cart.push({ id, qty, price, name });
-    });
-
-    // Get selected customer ID
-    const customerId = document.getElementById("customer_id").value;
-
-    fetch("/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cart: cart, customer_id: customerId })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.error) {
-            alert(data.error);
-        } else {
-            // Populate receipt modal
-            const receiptBody = document.getElementById("receiptTableBody");
-            receiptBody.innerHTML = "";
-            cart.forEach(item => {
-                receiptBody.innerHTML += `
-                    <tr>
-                        <td>${item.name}</td>
-                        <td>${item.qty}</td>
-                        <td>${item.price.toFixed(2)}</td>
-                        <td>${(item.qty * item.price).toFixed(2)}</td>
-                    </tr>`;
-            });
-            document.getElementById("receiptGrandTotal").textContent = data.total.toFixed(2);
-            document.getElementById("receiptId").textContent = data.receipt_id;
-
-            new bootstrap.Modal(document.getElementById("receiptModal")).show();
-        }
-    });
-});
 
