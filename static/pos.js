@@ -30,14 +30,17 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Search
-  document.getElementById("searchBar").addEventListener("keyup", function() {
-  let filter = this.value.toLowerCase();
-  let rows = document.querySelectorAll("#productsTable tr");
-  rows.forEach(row => {
-    let text = row.textContent.toLowerCase();
-    row.style.display = text.includes(filter) ? "" : "none";
+const searchBar = document.getElementById("searchBar");
+if (searchBar) {
+  searchBar.addEventListener("keyup", function() {
+    let filter = this.value.toLowerCase();
+    let rows = document.querySelectorAll("#productsTable tr");
+    rows.forEach(row => {
+      let text = row.textContent.toLowerCase();
+      row.style.display = text.includes(filter) ? "" : "none";
+    });
   });
-});
+}
 
 
   // Render cart
@@ -102,7 +105,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    // Get selected customer ID
     const customerId = document.getElementById("customer_id").value;
 
     fetch("/checkout", {
@@ -117,20 +119,15 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // Populate receipt modal
         const receiptTableBody = document.getElementById("receiptTableBody");
         const receiptGrandTotal = document.getElementById("receiptGrandTotal");
         const receiptId = document.getElementById("receiptId");
         const receiptCustomer = document.getElementById("receiptCustomer");
 
         receiptTableBody.innerHTML = "";
-        let total = 0;
-
         cart.forEach(item => {
             const row = document.createElement("tr");
             const itemTotal = item.qty * item.price;
-            total += itemTotal;
-
             row.innerHTML = `
               <td>${item.name}</td>
               <td>${item.qty}</td>
@@ -143,25 +140,21 @@ document.addEventListener("DOMContentLoaded", () => {
         receiptGrandTotal.textContent = data.total.toFixed(2);
         receiptId.textContent = data.receipt_id;
         receiptCustomer.textContent = data.customer_name;
-
-        // Show modal
+        document.getElementById("receiptCashier").textContent = data.cashier_name;
+        document.getElementById("receiptTimestamp").textContent = data.timestamp;
         const receiptModal = new bootstrap.Modal(document.getElementById("receiptModal"));
         receiptModal.show();
 
-        // Clear cart
         cart = [];
         renderCart();
     });
-});
-
-
+  });
 
   // Print receipt
   const printBtn = document.getElementById("printReceiptBtn");
   if (printBtn) {
     printBtn.addEventListener("click", () => {
       const receiptContent = document.getElementById("receiptModal").querySelector(".modal-body").innerHTML;
-
       const printWindow = window.open("", "", "width=800,height=600");
       printWindow.document.write(`
         <html>
@@ -179,7 +172,5 @@ document.addEventListener("DOMContentLoaded", () => {
       printWindow.print();
     });
   }
+
 });
-
-
-

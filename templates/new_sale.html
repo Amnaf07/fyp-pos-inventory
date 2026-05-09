@@ -1,6 +1,14 @@
 {% extends "base.html" %}
 {% block title %}New Sale{% endblock %}
 
+<style>
+  @media print {
+    body { font-family: monospace; }
+    h4 { margin-bottom: 0; }
+    hr { border-top: 1px dashed #000; }
+  }
+</style>
+
 {% block content %}
 <div class="container mt-4">
   <h2 class="text-center">New Sale</h2>
@@ -71,33 +79,42 @@
   </div>
 
   <!-- Receipt Modal -->
-  <div class="modal fade" id="receiptModal" tabindex="-1" aria-labelledby="receiptModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Receipt</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <table class="table table-bordered">
-            <thead>
-              <tr><th>Name</th><th>Qty</th><th>Price</th><th>Total</th></tr>
-            </thead>
-            <tbody id="receiptTableBody"></tbody>
-          </table>
-          <h4>Grand Total: <span id="receiptGrandTotal">0.00</span></h4>
-          <p>Customer: <span id="receiptCustomer"></span></p>
+  <div class="modal fade" id="receiptModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Receipt</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
 
-          <p>Receipt ID: <span id="receiptId"></span></p>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button class="btn btn-primary" id="printReceiptBtn">Print Receipt</button>
-        </div>
+        <h4 class="text-center">RetailSync</h4> <!-- HEADER -->
+  <p class="text-center">Main Street, Karachi</p>
+  <hr>
+
+        <p><strong>Receipt ID:</strong> <span id="receiptId"></span></p>
+        <p><strong>Customer:</strong> <span id="receiptCustomer"></span></p>
+        <p><strong>Cashier:</strong> <span id="receiptCashier"></span></p>
+
+
+        <table class="table table-sm">
+          <thead>
+            <tr><th>Product</th><th>Qty</th><th>Price</th><th>Total</th></tr>
+          </thead>
+          <tbody id="receiptTableBody"></tbody>
+        </table>
+        <h5 class="text-end">Grand Total: <span id="receiptGrandTotal"></span></h5>
+        <p><strong>Date/Time:</strong> <span id="receiptTimestamp"></span></p>
+         <hr>
+  <p class="text-center">Thank you for shopping with us!</p> <!-- FOOTER -->
+      </div>
+      <div class="modal-footer">
+        <button id="printReceiptBtn" class="btn btn-primary">Print</button>
       </div>
     </div>
   </div>
 </div>
+
 
 <script src="{{ url_for('static', filename='pos.js') }}"></script>
 {% endblock %}

@@ -28,7 +28,7 @@
             <tr>
               <td>{{ sale.id }}</td>
               <td>{{ sale.customer.name }}</td>
-              <td>{{ sale.total }}</td>
+              <td>{{ "%.2f"|format(sale.total) }}</td>
               <td>{{ sale.date }}</td>
             </tr>
           {% endfor %}
@@ -37,7 +37,161 @@
     </div>
   </div>
 </div>
+<div class="row mt-4">
+  <div class="col-md-4">
+    <div class="card text-center border-warning">
+      <div class="card-body">
+        <h5 class="text-warning">Low Stock Alert</h5>
+        <p>{{ low_stock_count }} products need restocking</p>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-sm btn-warning">
+          View in Admin
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-body">
+        <h5>Top Selling Products (Last 7 Days)</h5>
+        <table class="table table-sm">
+          <thead>
+            <tr><th>Product</th><th>Quantity Sold</th></tr>
+          </thead>
+          <tbody>
+            {% for product, qty in top_products %}
+              <tr>
+                <td>{{ product }}</td>
+                <td>{{ qty }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row mt-4">
+  <div class="col-md-12">
+    <div class="card shadow-sm">
+      <div class="card-header bg-info text-white">
+        <h5 class="mb-0">Sales Trend (Last 7 Days)</h5>
+      </div>
+      <div class="card-body">
+        <canvas id="salesTrendChart" height="120"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-success text-white">
+        <h5 class="mb-0">Sales by Product (Last 7 Days)</h5>
+      </div>
+      <div class="card-body">
+        <canvas id="productChart" height="120"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const canvas = document.getElementById('salesTrendChart');
+  if (!canvas) {
+    console.error("salesTrendChart canvas not found");
+    return;
+  }
+
+  const ctx = canvas.getContext('2d');
+
+  const chartLabels = JSON.parse('{{ labels|tojson|safe }}');
+  const chartDataTotals = JSON.parse('{{ totals|tojson|safe}}');
+
+  if (!chartLabels || !chartDataTotals) {
+    console.error("Chart data not provided");
+    return;
+  }
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: chartLabels,
+      datasets: [{
+        label: 'Daily Sales',
+        data: chartDataTotals,
+        borderColor: 'rgba(75, 192, 192, 1)',
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        fill: true,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: true },
+        title: { display: true, text: 'Sales Trend (Last 7 Days)' }
+      },
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+});
+
+// Product Chart
+
+document.addEventListener("DOMContentLoaded", () => {
+  const productCanvas = document.getElementById('productChart');
+  if (!productCanvas) return;
+
+  const ctxProduct = productCanvas.getContext('2d');
+  const productLabels = JSON.parse('{{ product_labels|tojson|safe }}');
+  const productTotals = JSON.parse('{{ product_totals|tojson|safe }}');
+
+  new Chart(ctxProduct, {
+    type: 'pie',
+    data: {
+      labels: productLabels,
+      datasets: [{
+        data: productTotals,
+        backgroundColor: [
+          'rgba(255, 99, 132, 0.6)',
+          'rgba(54, 162, 235, 0.6)',
+          'rgba(255, 206, 86, 0.6)',
+          'rgba(75, 192, 192, 0.6)',
+          'rgba(153, 102, 255, 0.6)',
+          'rgba(255, 159, 64, 0.6)'
+        ],
+        borderColor: '#fff',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom' },
+        title: { display: true, text: 'Sales by Product' },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const value = context.raw;
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = ((value / total) * 100).toFixed(1);
+              return `${context.label}: ${value.toFixed(2)} (${percentage}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+});
+</script>
 
 
-<script src="{{ url_for('static', filename='pos.js') }}"></script>
+
 {% endblock %}

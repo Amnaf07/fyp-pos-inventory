@@ -9,6 +9,7 @@ from models import User, Product, Sale, SaleItem, Expense
 from routes import admin, cashier
 from sqlalchemy import func 
 import calendar
+from decimal import Decimal
 
 # Import decorators
 from auth import login_required, role_required
@@ -271,13 +272,64 @@ def dashboard_cashier():
         .order_by(Sale.date.desc())\
         .limit(10).all()
 
+     # Low stock summary (threshold = 5)
+    low_stock_products = Product.query.filter(Product.stock < 5).all()
+    low_stock_count = len(low_stock_products)
+
+
+
+     # Top selling products (last 7 days)
+    seven_days_ago = datetime.utcnow().date() - timedelta(days=7)
+    top_products = db.session.query(
+    Product.name,
+    func.sum(SaleItem.quantity).label("total_qty")
+).join(SaleItem, Product.id == SaleItem.product_id)\
+ .join(Sale, Sale.id == SaleItem.sale_id)\
+ .group_by(Product.name)\
+ .order_by(func.sum(SaleItem.quantity).desc())\
+ .limit(5).all()
+    
+     # Sales trend (last 7 days)
+    seven_days_ago = today - timedelta(days=6)
+    sales_trend = db.session.query(
+        func.date(Sale.date).label("sale_date"),
+        func.sum(Sale.total).label("daily_total")
+    ).filter(Sale.date >= seven_days_ago, Sale.cashier_id == cashier_id)\
+     .group_by(func.date(Sale.date))\
+     .order_by(func.date(Sale.date)).all()
+
+    # Prepare data for Chart.js
+    labels = [str(row.sale_date) for row in sales_trend]
+    totals = [float(row.daily_total) for row in sales_trend]
+
+     # Product breakdown (last 7 days)
+    seven_days_ago = datetime.utcnow().date() - timedelta(days=6)
+    product_sales = db.session.query(
+        Product.name,
+        func.sum(SaleItem.quantity * SaleItem.price).label("product_total")
+    ).join(SaleItem, SaleItem.product_id == Product.id)\
+     .join(Sale, Sale.id == SaleItem.sale_id)\
+     .filter(Sale.date >= seven_days_ago, Sale.cashier_id == cashier_id)\
+     .group_by(Product.name).all()
+
+    product_labels = [row.name for row in product_sales]
+    product_totals = [float(row.product_total) for row in product_sales]
+
+    
     return render_template(
         "dashboard_cashier.html",
         products=products,
         total_sales_today=total_sales_today,
-        recent_sales=recent_sales
+        recent_sales=recent_sales,
+        low_stock_count=low_stock_count,
+        top_products=top_products,
+        labels=labels,
+        totals=totals,
+        product_labels=product_labels,
+        product_totals=product_totals
     )
-
+    
+    
 
 # Logout Route
 @app.route("/logout")
@@ -352,7 +404,8 @@ def checkout():
         total=total,
         items=json.dumps(cart),
         cashier_id=cashier_id,
-        customer_id=customer_id
+        customer_id=customer_id,
+        date=datetime.utcnow()
     )
     db.session.add(sale)
 
@@ -363,19 +416,24 @@ def checkout():
 
     db.session.commit()
 
-    # Fetch customer name
+    # Fetch customer and cashier names
     customer = Customer.query.get(customer_id)
     customer_name = customer.name if customer else "Walk-in"
+
+    cashier = User.query.get(cashier_id)  # assuming your User model holds cashier info
+    cashier_name = cashier.username if cashier else "Unknown"
 
     return jsonify({
         "message": "Sale successful",
         "receipt_id": sale.id,
         "total": total,
-        "customer_name": customer_name
+        "customer_name": customer_name,
+        "cashier_name": cashier_name
     })
 
 
-#Cashier new sale 
+
+#new sale route (form based)
 @app.route("/new_sale", methods=["GET", "POST"])
 @login_required
 @role_required("Cashier")
@@ -387,8 +445,33 @@ def new_sale():
         cashier_id = session.get("user_id")
         customer_id = request.form.get("customer_id") or DEFAULT_CUSTOMER_ID
 
-        sale = Sale(cashier_id=cashier_id, customer_id=customer_id)
+        # Create the sale record
+        sale = Sale(cashier_id=cashier_id, customer_id=customer_id, date=datetime.utcnow())
         db.session.add(sale)
+        db.session.flush()  # ensures sale.id is available before adding items
+
+        # Loop through cart items sent from the form/JS
+        cart_items = request.form.getlist("cart")  # e.g. [{"product_id":1,"quantity":2}, ...]
+        for item in cart_items:
+            product_id = int(item["product_id"])
+            qty = int(item["quantity"])
+
+            product = Product.query.get(product_id)
+            if not product:
+                continue
+
+            # Create SaleItem with product’s current price
+            sale_item = SaleItem(
+                sale_id=sale.id,
+                product_id=product.id,
+                quantity=qty,
+                price=product.price  # auto‑assign from Product
+            )
+            db.session.add(sale_item)
+
+            # Reduce stock
+            product.stock -= qty
+
         db.session.commit()
 
         flash("Sale created successfully!", "success")
@@ -400,6 +483,7 @@ def new_sale():
         customers=customers,
         DEFAULT_CUSTOMER_ID=DEFAULT_CUSTOMER_ID
     )
+
 
 
 
