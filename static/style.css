@@ -5,3 +5,215 @@
   
 }
 
+.bg-gradient {
+  background: linear-gradient(135deg, #ff7e5f, #feb47b, #4facfe, #00f2fe);
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
+}
+
+@keyframes gradientBG {
+  0% {background-position: 0% 50%;}
+  50% {background-position: 100% 50%;}
+  100% {background-position: 0% 50%;}
+}
+
+.btn-gradient {
+   background: linear-gradient(90deg, #4facfe, #00f2fe, #feb47b, #ff7e5f); 
+  background-size: 200% 200%;
+  color: #fff;
+  border: none;
+  transition: background-position 0.5s ease;
+}
+
+.btn-gradient:hover {
+  background-position: right center;
+  color: #fff;
+}
+
+.link-gradient {
+  position: relative;
+  color: #007bff; /* base link color */
+  text-decoration: none;
+}
+
+.link-gradient::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, #ff7e5f, #feb47b, #4facfe, #00f2fe);
+  transition: transform 0.3s ease;
+  transform: scaleX(0);
+  transform-origin: right;
+}
+
+.link-gradient:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+.footer-text {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  position: relative;
+  text-decoration: none;
+}
+
+/* Gradient underline hover */
+.footer-text::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, #ff7e5f, #feb47b, #4facfe, #00f2fe);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.3s ease;
+}
+
+.footer-text:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  footer {
+    padding: 0.25rem 0;   /* smaller vertical padding */
+  }
+  .footer-text {
+    font-size: 0.7rem;    /* shrink text size */
+  }
+}
+
+
+/* Default Light Mode */
+body.light-mode {
+  background-color: #f8f9fa;
+  color: #212529;
+}
+
+body.light-mode .form-control {
+  background-color: #ffffff;
+  color: #212529;
+}
+
+body.light-mode .footer-text {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+/* Dark Mode */
+body.dark-mode {
+  background-color: #121212;
+  color: #f8f9fa;
+}
+body.dark-mode .bg-white {
+  background-color: #1e1e1e !important; /* dark card */
+  color: #f8f9fa;
+  border: 2px solid transparent;
+  border-image: linear-gradient(90deg, #ff7e5f, #feb47b, #4facfe, #00f2fe) 1;
+  border-radius: 8px;
+}
+body.dark-mode .form-control {
+  background-color: #2a2a2a;
+  color: #f8f9fa;
+  border: 1px solid #444;
+}
+body.dark-mode .form-control::placeholder {
+  color: #aaa;
+}
+
+body.dark-mode a {
+  color: #4facfe; /* links stay visible */
+}
+
+body.dark-mode .footer-text {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Gradient background stays consistent */
+.bg-gradient {
+  background: linear-gradient(135deg, #ff7e5f, #feb47b, #4facfe, #00f2fe);
+}
+
+/* Gradient border for card in dark mode */
+body.dark-mode .bg-white {
+  background-color: #1e1e1e !important;
+  color: #f8f9fa;
+  border: 2px solid transparent;
+  border-image: linear-gradient(90deg, #ff7e5f, #feb47b, #4facfe, #00f2fe) 1;
+  border-radius: 8px;
+}
+
+/* Gradient heading text in dark mode */
+body.dark-mode h3.fw-bold {
+  background: linear-gradient(90deg, #ff7e5f, #feb47b, #4facfe, #00f2fe);
+    background-clip: text; 
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Light mode input focus */
+body.light-mode .form-control:focus {
+  border: 2px solid transparent;
+  border-image: linear-gradient(90deg, #ff7e5f, #feb47b, #4facfe, #00f2fe) 1;
+  box-shadow: 0 0 6px rgba(79, 172, 254, 0.6);
+}
+
+/* Dark mode input focus */
+body.dark-mode .form-control:focus {
+  border: 2px solid transparent;
+  border-image: linear-gradient(90deg, #ff7e5f, #feb47b, #4facfe, #00f2fe) 1;
+  background-color: #2a2a2a;
+  color: #f8f9fa;
+  box-shadow: 0 0 6px rgba(255, 126, 95, 0.6);
+}
+
+
+
+.flash-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Gradient alert base */
+.gradient-alert {
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  animation: fadeSlideIn 0.5s ease forwards;
+}
+
+/* Success gradient */
+.gradient-alert.alert-success {
+  background: linear-gradient(90deg, #4facfe, #00f2fe, #43e97b, #38f9d7);
+  color: #fff;
+}
+
+/* Error gradient */
+.gradient-alert.alert-error,
+.gradient-alert.alert-danger {
+  background: linear-gradient(90deg, #ff416c, #ff4b2b, #ff7e5f, #feb47b);
+  color: #fff;
+}
+
+/* Slide in animation */
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Fade out animation */
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; height: 0; margin: 0; padding: 0; }
+}
+
+
+

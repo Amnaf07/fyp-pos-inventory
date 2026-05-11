@@ -88,6 +88,7 @@
 
 </head>
 <body>
+  {% if request.endpoint not in ['login', 'register'] %}
   <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-dark fixed-top bg-dark">
     <div class="container-fluid">
@@ -185,6 +186,7 @@
     </ul>
   </nav>
 {% endif %}
+{%endif %}
 
 
       {% with messages = get_flashed_messages(with_categories=true) %}
