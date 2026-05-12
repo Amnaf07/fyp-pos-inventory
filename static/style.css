@@ -1,9 +1,60 @@
 .card {
   background-color: #f8d7da; /* light red */
   border-radius: 15px;
-  width: 180;
+  width: 180px;
   
 }
+/* KPI Cards */
+.card {
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.25);
+}
+
+/* Individual card themes */
+.card-sales {
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+}
+
+.card-products {
+  background: linear-gradient(135deg, #43e97b, #38f9d7);
+}
+
+.card-stock {
+  background: linear-gradient(135deg, #ff7e5f, #feb47b);
+}
+
+.card-revenue {
+  background: linear-gradient(135deg, #a18cd1, #fbc2eb);
+}
+
+.chart-card {
+  border-top: 4px solid #4facfe;
+  background-color: #fff;
+  border-radius: 10px;
+}
+
+.table thead {
+  background: linear-gradient(90deg, #ff7e5f, #feb47b);
+  color: #fff;
+}
+
+.low-stock-alert {
+  background: linear-gradient(135deg, #ec6d6d, #f3a183);
+  color: #fff;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
 
 .bg-gradient {
   background: linear-gradient(135deg, #ff7e5f, #feb47b, #4facfe, #00f2fe);
@@ -216,4 +267,23 @@ body.dark-mode .form-control:focus {
 }
 
 
+.btn-restock {
+  background-color: #ec6d6d;
+  color: #fff;
+  border: 0.5px solid #b22222;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-weight: 400;
+  transition: background-color 0.2s ease;
+  text-decoration: none;
+}
 
+.btn-restock:hover {
+  background-color: #dc4e4e !important; 
+  box-shadow: 0 0 6px rgba(220, 78, 78, 0.6); /* subtle glow */
+}
+
+.heading {
+  color: #333;        /* neutral dark for light mode */
+  font-weight: 700;
+}

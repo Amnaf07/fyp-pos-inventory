@@ -4,68 +4,50 @@
 {% block content %}
 <div class="container mt-4">
   <h2>Cashier Dashboard</h2>
-
-  <div class="row">
-    <div class="col-md-4">
-      <div class="card">
-        <div class="card-body">
-          <h5>Total Sales Today</h5>
-          <p>{{ total_sales_today }}</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-md-4">
-      <a href="{{ url_for('new_sale') }}" class="btn btn-primary mt-3">Start New Sale</a>
-    </div>
-
-    <div class="col-md-12 mt-4">
-      <h4>My Recent Sales</h4>
-      <table class="table table-striped">
-        <thead><tr><th>ID</th><th>Customer</th><th>Total</th><th>Date</th></tr></thead>
-        <tbody>
-          {% for sale in recent_sales %}
-            <tr>
-              <td>{{ sale.id }}</td>
-              <td>{{ sale.customer.name }}</td>
-              <td>{{ "%.2f"|format(sale.total) }}</td>
-              <td>{{ sale.date }}</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-<div class="row mt-4">
+  
+  <div class="row mb-4">
+  <!-- Total Sales -->
   <div class="col-md-4">
-    <div class="card text-center border-warning">
+    <div class="card card-sales p-3">
       <div class="card-body">
-        <h5 class="text-warning">Low Stock Alert</h5>
-        <p>{{ low_stock_count }} products need restocking</p>
-        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-sm btn-warning">
-          View in Admin
-        </a>
+          <div class="d-flex align-items-center"></div>
+         <i class="bi bi-cart-check fs-2 me-3"></i> <!-- Shopping cart icon -->
+          <div>
+        <h5 class="heading">Total Sales Today</h5>
+        <p>{{ total_sales_today }}</p>
+        </div>
+        <a href="{{ url_for('new_sale') }}" class=" btn btn-primary mt-3">Start New Sale</a>
       </div>
     </div>
   </div>
-</div>
 
-<div class="row mt-4">
-  <div class="col-md-6">
-    <div class="card">
-      <div class="card-body">
-        <h5>Top Selling Products (Last 7 Days)</h5>
+  <!-- Low Stock -->
+  <div class="col-md-4">
+    <div class="card text-center">
+      <div class="card-body low-stock-alert">
+          <div class="d-flex align-items-center">
+         <i class="bi bi-exclamation-triangle fs-2 mb-2"></i> <!-- Warning icon -->
+        <h5 class="card-title heading">Low Stock Alert</h5>
+        <p>{{ low_stock_count }} products need restocking</p>
+          </div>
+        <a href="{{ url_for('admin_dashboard') }}" class=" btn-sm btn-restock">View in Admin</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Products -->
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body chart-card">
+          <div class="d-flex align-items-center">
+        <i class="bi bi-star fs-2 me-2 text-warning"></i> <!-- Star icon -->
+        <h5 class="heading">Top Selling Products (Last 7 Days)</h5>
+        </div>
         <table class="table table-sm">
-          <thead>
-            <tr><th>Product</th><th>Quantity Sold</th></tr>
-          </thead>
+          <thead><tr><th>Product</th><th>Qty</th></tr></thead>
           <tbody>
             {% for product, qty in top_products %}
-              <tr>
-                <td>{{ product }}</td>
-                <td>{{ qty }}</td>
-              </tr>
+              <tr><td>{{ product }}</td><td>{{ qty }}</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -73,8 +55,30 @@
     </div>
   </div>
 </div>
-<div class="row mt-4">
+
+
+  <div class="row mb-4">
   <div class="col-md-12">
+    <h4>My Recent Sales</h4>
+    <table class="table table-striped">
+      <thead><tr><th>ID</th><th>Customer</th><th>Total</th><th>Date</th></tr></thead>
+      <tbody>
+        {% for sale in recent_sales %}
+          <tr>
+            <td>{{ sale.id }}</td>
+            <td>{{ sale.customer.name }}</td>
+            <td>{{ "%.2f"|format(sale.total) }}</td>
+            <td>{{ sale.date }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="row mb-4">
+  <!-- Sales Trend -->
+  <div class="col-md-6">
     <div class="card shadow-sm">
       <div class="card-header bg-info text-white">
         <h5 class="mb-0">Sales Trend (Last 7 Days)</h5>
@@ -84,9 +88,8 @@
       </div>
     </div>
   </div>
-</div>
 
-<div class="row mt-4">
+  <!-- Sales by Product -->
   <div class="col-md-6">
     <div class="card shadow-sm">
       <div class="card-header bg-success text-white">
@@ -98,6 +101,7 @@
     </div>
   </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
