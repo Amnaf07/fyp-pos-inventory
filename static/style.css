@@ -1,9 +1,13 @@
-.card {
-  background-color: #f8d7da; /* light red */
-  border-radius: 15px;
-  width: 180px;
-  
+
+.uniform-card {
+  height: 250px !important;       /* fixed height */
+  width : 100%;        /* full width of container */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* space out content */
 }
+
+
 /* KPI Cards */
 .card {
   border: none;
@@ -12,7 +16,7 @@
   box-shadow: 0 4px 10px rgba(0,0,0,0.15);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   font-family:Arial, Helvetica, sans-serif;
-}
+}  
 
 .card:hover {
   transform: translateY(-4px);
@@ -42,10 +46,27 @@
   border-radius: 10px;
 }
 
-.table thead {
-  background: linear-gradient(90deg, #ff7e5f, #feb47b);
+.table thead th{
   color: #fff;
+  font-weight: bold;
 }
+
+/* Top Products card background */
+.top-products-card {
+  background: linear-gradient(135deg, #20c997, #17a2b8); /* teal gradient */
+  color: #fff; /* white text for contrast */
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+/* Table header solid style */
+.top-products-card .table thead th {
+  background-color: rgba(255,255,255,0.15); /* subtle overlay */
+  color: #fff;
+  font-weight: bold;
+}
+
+
 
 .low-stock-alert {
   background: linear-gradient(135deg, #ec6d6d, #f3a183);
@@ -53,7 +74,7 @@
   border-radius: 8px;
   padding: 1rem;
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-}
+}v
 
 
 .bg-gradient {
@@ -283,7 +304,30 @@ body.dark-mode .form-control:focus {
   box-shadow: 0 0 6px rgba(220, 78, 78, 0.6); /* subtle glow */
 }
 
+
+.btn-new-sale {
+  background-color: #32a3dc;
+  color: #fff;
+  border: 0.5px solid #2222b2;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-weight: 400;
+  transition: background-color 0.2s ease;
+  text-decoration: none;
+}
+
+.btn-new-sale:hover {
+  background-color: #3284dc !important; 
+  box-shadow: 0 0 6px rgba(50, 163, 220, 0.6); /* subtle glow */
+}
+
 .heading {
   color: #333;        /* neutral dark for light mode */
   font-weight: 700;
+}
+
+.chart-container {
+  position: relative;
+  height: 400px;   /* increase to 400–500px */
+  width: 100%;
 }
