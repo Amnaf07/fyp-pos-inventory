@@ -39,7 +39,7 @@
     <div class="card-body">
       <div class="d-flex flex-column align-items-center justify-content-center">
         <i class="bi bi-star fs-2 mb-2 icon-top"></i> <!-- Star icon -->
-        <h5 class="heading">Top Selling Products (Last 7 Days)</h5>
+        <h5 class="heading">Top Selling Products</h5>
       </div>
       <table class="table table-sm mt-3">
         <thead>
@@ -63,21 +63,22 @@
 <div class="row mb-4">
   <!-- Sales Trend -->
   <div class="col-md-6">
-    <div class="card shadow-sm uniform-card">
-      <div class="card-header bg-info text-white">
+    <div class="card shadow-sm ">
+      <div class="card-header text-white sales-trend">
         <h5 class="mb-0">Sales Trend (Last 7 Days)</h5>
       </div>
-      <div class="card-body chart-container">
+      <div class="card-body cardbody1">
         <canvas id="salesTrendChart" height="120"></canvas>
+      
       </div>
     </div>
   </div>
 
   <!-- Sales by Product -->
   <div class="col-md-6">
-    <div class="card shadow-sm uniform-card">
-      <div class="card-header bg-success text-white">
-        <h5 class="mb-0">Sales by Product (Last 7 Days)</h5>
+    <div class="card shadow-sm">
+      <div class="card-header text-white sales-by-product cardbody2">
+        <h5 class="mb-0">Sales by Product</h5>
       </div>
       <div class="card-body chart-container">
         <canvas id="productChart" height="120"></canvas>
@@ -89,7 +90,7 @@
 <div class="row mb-4">
   <div class="col-md-12">
     <h4>My Recent Sales</h4>
-    <table class="table table-striped">
+    <table class="table table-striped recent-sales-table table-hover">
       <thead><tr><th>ID</th><th>Customer</th><th>Total</th><th>Date</th></tr></thead>
       <tbody>
         {% for sale in recent_sales %}

@@ -44,6 +44,7 @@
   border-top: 4px solid #4facfe;
   background-color: #fff;
   border-radius: 10px;
+  height: 600px;
 }
 
 .table thead th{
@@ -297,6 +298,7 @@ body.dark-mode .form-control:focus {
   font-weight: 400;
   transition: background-color 0.2s ease;
   text-decoration: none;
+  display: inline-block;
 }
 
 .btn-restock:hover {
@@ -314,6 +316,7 @@ body.dark-mode .form-control:focus {
   font-weight: 400;
   transition: background-color 0.2s ease;
   text-decoration: none;
+  display: inline-block;
 }
 
 .btn-new-sale:hover {
@@ -321,13 +324,32 @@ body.dark-mode .form-control:focus {
   box-shadow: 0 0 6px rgba(50, 163, 220, 0.6); /* subtle glow */
 }
 
+@media (max-width: 576px) {
+  .btn-new-sale,
+  .btn-restock {
+    display: block;       /* full width */
+    width: 100%;          /* stretch across card */
+    font-size: 0.9rem;    /* slightly smaller text */
+    margin-top: 0.5rem;   /* spacing from content above */
+  }
+}
+
 .heading {
   color: #333;        /* neutral dark for light mode */
   font-weight: 700;
 }
 
-.chart-container {
-  position: relative;
-  height: 400px;   /* increase to 400–500px */
-  width: 100%;
+.cardbody1{
+  height:max-content;
 }
+
+
+
+.sales-by-product {
+  background-color: #a787f2 !important; /* purple background */
+}
+
+.sales-trend {
+  background-color: #548a57 !important;
+}    
+  

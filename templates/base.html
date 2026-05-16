@@ -97,133 +97,130 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  {% if request.endpoint not in ['login', 'register'] %}
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark fixed-top bg-dark">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="#">RetailSync</a>
-      {% if session.get('user_id') %}
-        <button class="btn btn-outline-light d-md-none me-2" id="sidebarToggle">
-          <i class="bi bi-list"></i>
-        </button>
-        <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
-      {% endif %}
-    </div>
-  </nav>
 
-  <!-- Layout wrapper -->
-  <div class="layout">
-    <!-- Sidebar -->
-    {% if session.get('user_id') %}
-    <nav class="sidebar">
-      {% if session.get('role') == 'Admin' %}
-        <h4 class="mb-4">Admin Panel</h4>
-        <ul class="nav flex-column">
-          <div class="indicator"></div>
-          <li class="nav-item mb-2">
-            <a class="nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
-              <i class="bi bi-speedometer2"></i> Dashboard
-            </a>
-          </li>
-          <li class="nav-item mb-2">
-            <a class="nav-link {% if request.endpoint == 'manage_users' %}active{% endif %}" href="{{ url_for('manage_users') }}">
-              <i class="bi bi-people"></i> Manage Users
-            </a>
-          </li>
-          <li class="nav-item mb-2">
-            <a class="nav-link {% if request.endpoint == 'products_table' %}active{% endif %}" href="{{ url_for('products_table') }}">
-              <i class="bi bi-box-seam"></i> Products
-            </a>
-          </li>
-          <li class="nav-item mb-2">
-            <a class="nav-link {% if request.endpoint == 'sales_history_paginated' %}active{% endif %}" href="{{ url_for('sales_history_paginated') }}">
-              <i class="bi bi-receipt"></i> Sales History
-            </a>
-          </li>
-        </ul>
-      {% elif session.get('role') == 'Cashier' %}
-        <h4 class="mb-4">Cashier Panel</h4>
-        <ul class="nav flex-column">
-          <div class="indicator"></div>
-          <li class="nav-item mb-2">
-            <a class="nav-link {% if request.endpoint == 'dashboard_cashier' %}active{% endif %}" href="{{ url_for('dashboard_cashier') }}">
-              <i class="bi bi-speedometer2"></i> Dashboard
-            </a>
-          </li>
-          <li class="nav-item mb-2">
-            <a class="nav-link {% if request.endpoint == 'new_sale' %}active{% endif %}" href="{{ url_for('new_sale') }}">
-              <i class="bi bi-cart"></i> New Sale
-            </a>
-          </li>
-          <li class="nav-item mb-2">
-            <a class="nav-link {% if request.endpoint == 'cashier_sales_history' %}active{% endif %}" href="{{ url_for('cashier_sales_history') }}">
-              <i class="bi bi-receipt"></i> My Sales
-            </a>
-          </li>
-        </ul>
-      {% elif session.get('role') == 'Manager' %}
-        <h4 class="mb-4">Manager Panel</h4>
-        <ul class="nav flex-column">
-          <div class="indicator"></div>
-          <li class="nav-item mb-2">
-            <a class="nav-link {% if request.endpoint == 'manager_dashboard' %}active{% endif %}" href="{{ url_for('manager_dashboard') }}">
-              <i class="bi bi-speedometer2"></i> Dashboard
-            </a>
-          </li>
-          <li class="nav-item mb-2">
-            <a class="nav-link {% if request.endpoint == 'reports' %}active{% endif %}" href="{{ url_for('reports') }}">
-              <i class="bi bi-bar-chart"></i> Reports
-            </a>
-          </li>
-          <li class="nav-item mb-2">
-            <a class="nav-link {% if request.endpoint == 'inventory_status' %}active{% endif %}" href="{{ url_for('inventory_status') }}">
-              <i class="bi bi-box-seam"></i> Inventory Status
-            </a>
-          </li>
-        </ul>
-      {% endif %}
-
-      <!-- Logout always visible -->
-      <ul class="nav flex-column mt-3">
-        <li class="nav-item mb-2">
-          <a class="nav-link" href="{{ url_for('logout') }}">
-            <i class="bi bi-box-arrow-right"></i> Logout
-          </a>
-        </li>
-      </ul>
+  {% if request.endpoint not in ['login','register'] %}
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top bg-dark">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">RetailSync</a>
+        {% if session.get('user_id') %}
+          <button class="btn btn-outline-light d-md-none me-2" id="sidebarToggle">
+            <i class="bi bi-list"></i>
+          </button>
+          <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+        {% endif %}
+      </div>
     </nav>
+
+    <div class="layout">
+      {% if session.get('user_id') %}
+        <!-- Sidebar -->
+        <nav class="sidebar">
+         <!-- role based links -->
+          {% if session.get('role') == 'Admin' %}
+  <h4 class="mb-4">Admin Panel</h4>
+  <ul class="nav flex-column">
+    <div class="indicator"></div>
+    <li class="nav-item mb-2">
+      <a class="nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
+        <i class="bi bi-speedometer2"></i> Dashboard
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a class="nav-link {% if request.endpoint == 'manage_users' %}active{% endif %}" href="{{ url_for('manage_users') }}">
+        <i class="bi bi-people"></i> Manage Users
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a class="nav-link {% if request.endpoint == 'products_table' %}active{% endif %}" href="{{ url_for('products_table') }}">
+        <i class="bi bi-box-seam"></i> Products
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a class="nav-link {% if request.endpoint == 'sales_history_paginated' %}active{% endif %}" href="{{ url_for('sales_history_paginated') }}">
+        <i class="bi bi-receipt"></i> Sales History
+      </a>
+    </li>
+  </ul>
+{% elif session.get('role') == 'Cashier' %}
+  <h4 class="mb-4">Cashier Panel</h4>
+  <ul class="nav flex-column">
+    <div class="indicator"></div>
+    <li class="nav-item mb-2">
+      <a class="nav-link {% if request.endpoint == 'dashboard_cashier' %}active{% endif %}" href="{{ url_for('dashboard_cashier') }}">
+        <i class="bi bi-speedometer2"></i> Dashboard
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a class="nav-link {% if request.endpoint == 'new_sale' %}active{% endif %}" href="{{ url_for('new_sale') }}">
+        <i class="bi bi-cart"></i> New Sale
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a class="nav-link {% if request.endpoint == 'cashier_sales_history' %}active{% endif %}" href="{{ url_for('cashier_sales_history') }}">
+        <i class="bi bi-receipt"></i> My Sales
+      </a>
+    </li>
+  </ul>
+{% elif session.get('role') == 'Manager' %}
+  <h4 class="mb-4">Manager Panel</h4>
+  <ul class="nav flex-column">
+    <div class="indicator"></div>
+    <li class="nav-item mb-2">
+      <a class="nav-link {% if request.endpoint == 'manager_dashboard' %}active{% endif %}" href="{{ url_for('manager_dashboard') }}">
+        <i class="bi bi-speedometer2"></i> Dashboard
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a class="nav-link {% if request.endpoint == 'reports' %}active{% endif %}" href="{{ url_for('reports') }}">
+        <i class="bi bi-bar-chart"></i> Reports
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a class="nav-link {% if request.endpoint == 'inventory_status' %}active{% endif %}" href="{{ url_for('inventory_status') }}">
+        <i class="bi bi-box-seam"></i> Inventory Status
+      </a>
+    </li>
+  </ul>
+{% endif %}
+
+<!-- Logout always visible -->
+<ul class="nav flex-column mt-3">
+  <li class="nav-item mb-2">
+    <a class="nav-link" href="{{ url_for('logout') }}">
+      <i class="bi bi-box-arrow-right"></i> Logout
+    </a>
+  </li>
+</ul>
+
+        </nav>
+      {% endif %}
     {% endif %}
 
-    <!-- Main Content -->
-    <main class="main-content" id="content-area">
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          <div class="container mt-3">
-            <div class="d-flex flex-column gap-2">
-              {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show d-flex align-items-center" role="alert">
-                  {% if category == 'success' %}
-                    <i class="bi bi-check-circle-fill me-2"></i>
-                  {% elif category == 'warning' %}
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                  {% elif category == 'danger' %}
-                    <i class="bi bi-x-circle-fill me-2"></i>
-                  {% elif category == 'info' %}
-                    <i class="bi bi-info-circle-fill me-2"></i>
-                  {% endif %}
-                  <span>{{ message }}</span>
-                  <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
-                </div>
-              {% endfor %}
-            </div>
-          </div>
-        {% endif %}
-      {% endwith %}
+    
 
-      {% block content %}{% endblock %}
-    </main>
-  </div>
+  <!-- ✅ Single content block always available -->
+  <main class="main-content" id="content-area">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="container mt-3">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+              <span>{{ message }}</span>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+ {% if request.endpoint not in ['login','register'] %}
+    </div> <!-- close .layout -->
   {% endif %}
+  
+</body>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
 </script>
   <script>

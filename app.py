@@ -290,7 +290,7 @@ def dashboard_cashier():
  .limit(5).all()
     
      # Sales trend (last 7 days)
-    seven_days_ago = today - timedelta(days=6)
+    seven_days_ago = datetime.utcnow() - timedelta(days=7)    
     sales_trend = db.session.query(
         func.date(Sale.date).label("sale_date"),
         func.sum(Sale.total).label("daily_total")
@@ -303,17 +303,31 @@ def dashboard_cashier():
     totals = [float(row.daily_total) for row in sales_trend]
 
      # Product breakdown (last 7 days)
-    seven_days_ago = datetime.utcnow().date() - timedelta(days=6)
+    seven_days_ago = datetime.utcnow().date() - timedelta(days=7)
+
     product_sales = db.session.query(
-        Product.name,
-        func.sum(SaleItem.quantity * SaleItem.price).label("product_total")
-    ).join(SaleItem, SaleItem.product_id == Product.id)\
-     .join(Sale, Sale.id == SaleItem.sale_id)\
-     .filter(Sale.date >= seven_days_ago, Sale.cashier_id == cashier_id)\
-     .group_by(Product.name).all()
+    Product.name,
+    func.sum(SaleItem.quantity).label("product_total")
+).join(SaleItem, SaleItem.product_id == Product.id)\
+ .join(Sale, Sale.id == SaleItem.sale_id)\
+ .group_by(Product.name).all()
+
+
+
 
     product_labels = [row.name for row in product_sales]
-    product_totals = [float(row.product_total) for row in product_sales]
+    product_totals = [int(row.product_total or 0) for row in product_sales]
+
+    all_sales = Sale.query.all()
+    for s in all_sales:
+       print(s.id, s.date, s.cashier_id)
+
+    all_items = SaleItem.query.all()
+    for i in all_items:
+       print("SaleItem:", i.id, i.sale_id, i.product_id, i.quantity, i.price)
+
+
+
 
     
     return render_template(
@@ -505,14 +519,6 @@ def cashier_sales_history():
                            sales=sales.items,
                            page=page,
                            pagination=sales)
-
-
-
-
-
-
-
-
 
 
 @app.route("/products")
