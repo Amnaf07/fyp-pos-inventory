@@ -18,7 +18,7 @@ depends_on = None
 
 def upgrade():
     with op.batch_alter_table('sales', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('customer_id', sa.Integer(), nullable=False))
+        batch_op.add_column(sa.Column('customer_id', sa.Integer(), nullable=True))
         batch_op.alter_column('cashier_id',
                existing_type=sa.INTEGER(),
                nullable=False)

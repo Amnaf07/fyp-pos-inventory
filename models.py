@@ -29,6 +29,7 @@ class SaleItem(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey("products.id"))
     quantity = db.Column(db.Integer, nullable=False)
     price = db.Column(db.Float, nullable=False, default=0.0)
+    discount = db.Column(db.Float, default=0.0)  # percentage or flat amount
 
     sale = db.relationship("Sale", back_populates="sale_items")
     product = db.relationship("Product", back_populates="sale_items")

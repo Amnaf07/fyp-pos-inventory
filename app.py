@@ -391,6 +391,7 @@ def delete_product(id):
     return redirect(url_for("admin_dashboard"))
 
 # Checkout (Cashier)
+# Checkout (Cashier)
 @app.route("/checkout", methods=["POST"])
 @login_required
 @role_required("Cashier")
@@ -398,6 +399,7 @@ def checkout():
     data = request.get_json()
     cart = data.get("cart", [])
     customer_id = data.get("customer_id") or DEFAULT_CUSTOMER_ID
+    discount = float(data.get("discount", 0))  # NEW: discount percentage
     cashier_id = session.get("user_id")
 
     # Validate stock
@@ -412,6 +414,10 @@ def checkout():
 
     # Calculate total
     total = sum(item["qty"] * float(item["price"]) for item in cart)
+
+    # Apply discount
+    if discount > 0:
+        total = total - (total * discount / 100)
 
     # Save sale
     sale = Sale(
@@ -434,15 +440,31 @@ def checkout():
     customer = Customer.query.get(customer_id)
     customer_name = customer.name if customer else "Walk-in"
 
-    cashier = User.query.get(cashier_id)  # assuming your User model holds cashier info
+    cashier = User.query.get(cashier_id)
     cashier_name = cashier.username if cashier else "Unknown"
+
+    # Build item details for receipt
+    items = []
+    for item in cart:
+        subtotal = item["qty"] * float(item["price"])
+        if discount > 0:
+            subtotal -= (subtotal * discount / 100)
+        items.append({
+            "name": item["name"],
+            "qty": item["qty"],
+            "price": float(item["price"]),
+            "discount": discount,
+            "total": subtotal
+        })
 
     return jsonify({
         "message": "Sale successful",
         "receipt_id": sale.id,
         "total": total,
         "customer_name": customer_name,
-        "cashier_name": cashier_name
+        "cashier_name": cashier_name,
+        "timestamp": sale.date.strftime("%Y-%m-%d %H:%M:%S"),
+        "items": items
     })
 
 

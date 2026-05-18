@@ -335,7 +335,7 @@ body.dark-mode .form-control:focus {
 }
 
 .heading {
-  color: #333;        /* neutral dark for light mode */
+  color: #333;      /* neutral dark for light mode */
   font-weight: 700;
 }
 
@@ -346,10 +346,25 @@ body.dark-mode .form-control:focus {
 
 
 .sales-by-product {
-  background-color: #a787f2 !important; /* purple background */
+  background-color: #475c66 !important; /* purple background */
 }
 
 .sales-trend {
-  background-color: #548a57 !important;
+  background-color: #475c66 !important;
 }    
   
+.recent-sales-table th{
+  background-color: #38a0d0 !important;
+}
+
+.chart-container {
+  display: flex;
+  justify-content: center;  /* centers horizontally */
+  align-items: center;      /* centers vertically if needed */
+  height: 250px;            /* keep consistent height */
+}
+
+.receipt-table th {
+  background-color: #38a0d0 !important;
+  color: #fff;
+}

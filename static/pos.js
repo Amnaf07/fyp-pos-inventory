@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   const cartTableBody = document.querySelector("#cartTable tbody");
   const grandTotalEl = document.getElementById("grandTotal");
+  const discountInput = document.getElementById("discount"); // discount field
   let cart = [];
 
   // Reset Add Product modal
@@ -30,18 +31,17 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Search
-const searchBar = document.getElementById("searchBar");
-if (searchBar) {
-  searchBar.addEventListener("keyup", function() {
-    let filter = this.value.toLowerCase();
-    let rows = document.querySelectorAll("#productsTable tr");
-    rows.forEach(row => {
-      let text = row.textContent.toLowerCase();
-      row.style.display = text.includes(filter) ? "" : "none";
+  const searchBar = document.getElementById("searchBar");
+  if (searchBar) {
+    searchBar.addEventListener("keyup", function() {
+      let filter = this.value.toLowerCase();
+      let rows = document.querySelectorAll("#productsTable tr");
+      rows.forEach(row => {
+        let text = row.textContent.toLowerCase();
+        row.style.display = text.includes(filter) ? "" : "none";
+      });
     });
-  });
-}
-
+  }
 
   // Render cart
   function renderCart() {
@@ -66,6 +66,13 @@ if (searchBar) {
       `;
       cartTableBody.appendChild(row);
     });
+
+    // Apply discount to grand total
+    let discount = parseFloat(discountInput.value) || 0;
+    if (discount > 0) {
+      if (discount > 100) discount = 100; // safety cap
+      total = total - (total * discount / 100);
+    }
 
     grandTotalEl.textContent = total.toFixed(2);
 
@@ -98,6 +105,9 @@ if (searchBar) {
     });
   }
 
+  // Recalculate when discount changes
+  discountInput.addEventListener("input", renderCart);
+
   // Checkout
   document.getElementById("checkoutBtn").addEventListener("click", () => {
     if (cart.length === 0) {
@@ -106,11 +116,18 @@ if (searchBar) {
     }
 
     const customerId = document.getElementById("customer_id").value;
+    let discount = parseFloat(discountInput.value) || 0;
+
+    // Validation
+    if (discount < 0 || discount > 100) {
+      alert("Discount must be between 0 and 100%");
+      return;
+    }
 
     fetch("/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cart, customer_id: customerId })
+        body: JSON.stringify({ cart, customer_id: customerId, discount })
     })
     .then(res => res.json())
     .then(data => {
@@ -125,14 +142,14 @@ if (searchBar) {
         const receiptCustomer = document.getElementById("receiptCustomer");
 
         receiptTableBody.innerHTML = "";
-        cart.forEach(item => {
+        data.items.forEach(item => {
             const row = document.createElement("tr");
-            const itemTotal = item.qty * item.price;
             row.innerHTML = `
               <td>${item.name}</td>
               <td>${item.qty}</td>
               <td>${item.price.toFixed(2)}</td>
-              <td>${itemTotal.toFixed(2)}</td>
+              <td>${item.discount ? item.discount + "%" : "-"}</td>
+              <td>${item.total.toFixed(2)}</td>
             `;
             receiptTableBody.appendChild(row);
         });
@@ -145,7 +162,9 @@ if (searchBar) {
         const receiptModal = new bootstrap.Modal(document.getElementById("receiptModal"));
         receiptModal.show();
 
+        // Reset cart and discount field
         cart = [];
+        discountInput.value = "0";   // reset discount
         renderCart();
     });
   });
