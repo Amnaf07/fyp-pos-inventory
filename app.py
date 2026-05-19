@@ -23,10 +23,6 @@ migrate = Migrate(app, db)
 
 app.secret_key = "1234"
 
-# Register blueprints
-app.register_blueprint(admin.bp)
-app.register_blueprint(cashier.bp)
-
 
 # Routes
 
@@ -39,8 +35,7 @@ def index():
         elif session["role"] == "Cashier":
             return redirect(url_for("dashboard_cashier"))
         else:
-            return redirect(url_for("dashboard"))
-    # If not logged in, show login page
+            return redirect(url_for("login"))
     return redirect(url_for("login"))
 
 
@@ -65,7 +60,7 @@ def login():
             elif user.role == "Cashier":
                 return redirect(url_for("dashboard_cashier"))
             else:
-                return redirect(url_for("dashboard"))
+                return redirect(url_for("login"))
         else:
             flash("Invalid username or password.", "danger")
     return render_template("login.html")
@@ -124,11 +119,33 @@ def edit_user(user_id):
     db.session.commit()
     return redirect(url_for('manage_users'))
 
+from werkzeug.security import generate_password_hash
+
 @app.route('/admin/users/delete/<int:user_id>', methods=['POST'])
+@login_required
+@role_required("Admin")
 def delete_user(user_id):
     user = User.query.get_or_404(user_id)
+
+    # Ensure a default cashier exists
+    default_cashier = User.query.filter_by(username="Walk-in").first()
+    if not default_cashier:
+        default_cashier = User(username="Walk-in", role="Cashier")
+        default_cashier.password_hash = generate_password_hash("default")
+        db.session.add(default_cashier)
+        db.session.commit()
+
+    # Reassign sales BEFORE deleting the user
+    Sale.query.filter_by(cashier_id=user.id).update(
+        {"cashier_id": default_cashier.id}
+    )
+    db.session.commit()
+
+    # Now delete the user safely
     db.session.delete(user)
     db.session.commit()
+
+    flash("User deleted and their sales reassigned.", "success")
     return redirect(url_for('manage_users'))
 
 
@@ -579,6 +596,14 @@ def sales_history_paginated():
     return render_template("sales_history.html", sales=sales.items, page=page,
                            start_date=start_date_str, end_date=end_date_str)
 
+
+#cashier inventory view (read‑only)
+@app.route("/inventory")
+@login_required
+@role_required("Cashier")
+def cashier_inventory():
+    products = Product.query.all()
+    return render_template("cashier_inventory.html", products=products)
 
 
 

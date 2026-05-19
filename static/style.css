@@ -247,8 +247,6 @@ body.dark-mode .form-control:focus {
   box-shadow: 0 0 6px rgba(255, 126, 95, 0.6);
 }
 
-
-
 .flash-container {
   display: flex;
   flex-direction: column;
@@ -368,3 +366,4 @@ body.dark-mode .form-control:focus {
   background-color: #38a0d0 !important;
   color: #fff;
 }
+

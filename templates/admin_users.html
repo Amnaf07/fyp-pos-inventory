@@ -1,16 +1,17 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container mt-4">
-  <h2 class="mb-3">Manage Users</h2>
-
-  <!-- Add User Button -->
-  <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addUserModal">
+  <h2 class="mb-3" style="display: inline;">Manage Users</h2>
+   <!-- Add User Button -->
+  <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addUserModal" style="margin-left: 50%;">
     Add User
   </button>
 
+ 
+
   <!-- Users Table -->
-  <table class="table table-striped">
-    <thead>
+  <table class="table table-striped mt-5">
+    <thead class="table-dark">
       <tr>
         <th>Username</th>
         <th>Role</th>
@@ -36,9 +37,10 @@
           </button>
 
           <!-- Delete Form -->
-          <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" style="display:inline;">
-            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-          </form>
+          <form method="POST" action="{{ url_for('delete_user', user_id=user.id) }}" style="display:inline;">
+    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+</form>
+
         </td>
       </tr>
 
@@ -46,7 +48,8 @@
       <div class="modal fade" id="editUserModal{{ user.id }}" tabindex="-1">
         <div class="modal-dialog">
           <div class="modal-content">
-            <form method="POST" action="{{ url_for('admin.edit_user', user_id=user.id) }}">
+            <form method="POST" action="{{ url_for('edit_user', user_id=user.id) }}">
+
               <div class="modal-header">
                 <h5 class="modal-title">Edit User</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -74,7 +77,8 @@
 <div class="modal fade" id="addUserModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
-      <form method="POST" action="{{ url_for('admin.add_user') }}">
+      <form method="POST" action="{{ url_for('add_user') }}">
+
         <div class="modal-header">
           <h5 class="modal-title">Add User</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
