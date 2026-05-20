@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Manager Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">Manager Dashboard</h2>
+  <p class="text-muted">Overview of sales, inventory, and cashier performance.</p>
+
+  <!-- KPI Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card text-white bg-success shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Sales Today</h5>
+          <p class="card-text fs-4">{{ sales_today }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-danger shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Low Stock Items</h5>
+          <p class="card-text fs-4">{{ low_stock_count }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-primary shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Top Cashier</h5>
+          <p class="card-text fs-5">{{ top_cashier }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-info shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Total Customers</h5>
+          <p class="card-text fs-4">{{ customer_count }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sales Trend Chart -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header">
+      <i class="bi bi-bar-chart"></i> Sales Trend
+    </div>
+    <div class="card-body">
+      <canvas id="salesChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Inventory Table -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header">
+      <i class="bi bi-box-seam"></i> Inventory Status
+    </div>
+    <div class="card-body">
+      <table class="table table-striped ">
+        <thead class="table-dark">
+          <tr>
+            <th>Product</th>
+            <th>Stock</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product in products %}
+          <tr>
+            <td>{{ product.name }}</td>
+            <td>{{ product.stock }}</td>
+            <td>
+              {% if product.stock < 5 %}
+                <span class="badge bg-danger">Low</span>
+              {% else %}
+                <span class="badge bg-success">OK</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js Script -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('salesChart').getContext('2d');
+  const salesChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: sales_labels,
+      datasets: [{
+        label: 'Sales',
+        data:  sales_data,
+        borderColor: '#0d6efd',
+        backgroundColor: 'rgba(13, 110, 253, 0.2)',
+        fill: true,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: true },
+        title: { display: true, text: 'Sales Trend' }
+      }
+    }
+  });
+</script>
+
+{% endblock %}

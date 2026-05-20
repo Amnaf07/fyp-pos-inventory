@@ -21,6 +21,7 @@ class Product(db.Model):
     price = db.Column(db.Float, nullable=False)
     stock = db.Column(db.Integer, nullable=False)
     sale_items = db.relationship("SaleItem", back_populates="product")
+    flagged = db.Column(db.Boolean, default=False)  
 
 class SaleItem(db.Model):
     __tablename__ = "sale_items"
@@ -50,7 +51,8 @@ class Sale(db.Model):
     items = db.Column(db.Integer, nullable=False, default=0)
     customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=False)
     customer = db.relationship("Customer", back_populates="sales")
-
+    discount = db.Column(db.Float, nullable=False, server_default="0")  # percentage or flat amount
+    voided = db.Column(db.Integer, nullable=False, server_default="0")
 
     sale_items = db.relationship("SaleItem", back_populates="sale")
     cashier = db.relationship("User", back_populates="sales")

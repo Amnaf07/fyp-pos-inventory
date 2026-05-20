@@ -33,7 +33,9 @@ def index():
         if session["role"] == "Admin":
             return redirect(url_for("admin_dashboard"))
         elif session["role"] == "Cashier":
-            return redirect(url_for("dashboard_cashier"))
+            return redirect(url_for("cashier_dashboard"))
+        elif session["role"] == "Manager":
+            return redirect(url_for("manager_dashboard"))
         else:
             return redirect(url_for("login"))
     return redirect(url_for("login"))
@@ -58,12 +60,16 @@ def login():
             if user.role == "Admin":
                 return redirect(url_for("admin_dashboard"))
             elif user.role == "Cashier":
-                return redirect(url_for("dashboard_cashier"))
+                return redirect(url_for("cashier_dashboard"))
+            elif user.role == "Manager":
+                return redirect(url_for("manager_dashboard"))
             else:
+                flash("Role not recognized", "danger")
                 return redirect(url_for("login"))
         else:
             flash("Invalid username or password.", "danger")
     return render_template("login.html")
+
 
 # Register Route
 @app.route("/register", methods=["GET", "POST"])
@@ -593,7 +599,8 @@ def sales_history_paginated():
 
     sales = query.paginate(page=page, per_page=per_page)
 
-    return render_template("sales_history.html", sales=sales.items, page=page,
+    return render_template("sales_history.html",                 sales=sales.items, 
+                           page=page,
                            start_date=start_date_str, end_date=end_date_str)
 
 
@@ -606,7 +613,189 @@ def cashier_inventory():
     return render_template("cashier_inventory.html", products=products)
 
 
+#MANAGER DASHBOARD
+@app.route('/manager_dashboard')
+@login_required
+@role_required("Manager")
+def manager_dashboard():
+    # Sales today
+    sales_today = db.session.query(func.sum(Sale.total))\
+        .filter(func.date(Sale.date) == date.today()).scalar() or 0
 
+    # Low stock count
+    low_stock_count = Product.query.filter(Product.stock < 5).count()
+
+    # Top cashier by sales
+    top_cashier = db.session.query(User.username)\
+        .join(Sale, Sale.cashier_id == User.id)\
+        .group_by(User.username)\
+        .order_by(func.sum(Sale.total).desc())\
+        .first()
+    top_cashier = top_cashier[0] if top_cashier else "N/A"
+
+    # Customer count
+    customer_count = Customer.query.count()
+
+    # Sales trend chart (last 7 days)
+    sales_data = db.session.query(func.date(Sale.date), func.sum(Sale.total))\
+        .group_by(func.date(Sale.date))\
+        .order_by(func.date(Sale.date).desc())\
+        .limit(7).all()
+    sales_labels = [str(row[0]) for row in sales_data][::-1]
+    sales_values = [row[1] for row in sales_data][::-1]
+
+    return render_template(
+        "manager_dashboard.html",
+        sales_today=sales_today,
+        low_stock_count=low_stock_count,
+        top_cashier=top_cashier,
+        customer_count=customer_count,
+        sales_labels=json.dumps(sales_labels),
+        sales_data=json.dumps(sales_values),
+        products=Product.query.all()
+    )
+
+@app.route('/manager/reports')
+@login_required
+@role_required("Manager")
+def manager_reports():
+    # Example: monthly sales totals
+    reports = db.session.query(
+        func.strftime("%Y-%m", Sale.date).label("month"),
+        func.sum(Sale.total).label("total"),
+        func.count(Sale.id).label("count")
+    ).group_by("month").all()
+
+    labels = [r.month for r in reports]
+    data = [r.total for r in reports]
+
+    return render_template(
+        "manager_reports.html",
+        reports=reports,
+        labels=json.dumps(labels),
+        data=json.dumps(data)
+    )
+
+
+@app.route('/manager/inventory')
+@login_required
+@role_required("Manager")
+def manager_inventory():
+    products = Product.query.all()
+    return render_template("manager_inventory.html", products=products)
+
+
+@app.route('/manager/cashiers')
+@login_required
+@role_required("Manager")
+def manager_cashiers():
+    cashiers = db.session.query(
+        User.username.label("name"),
+        func.sum(Sale.total).label("sales_total"),
+        func.count(Sale.id).label("transactions"),
+        func.sum(Sale.discount).label("discounts"),
+        func.sum(Sale.voided).label("voided")
+    ).join(Sale, Sale.cashier_id == User.id)\
+     .filter(User.role == "Cashier")\
+     .group_by(User.username).all()
+
+    cashier_labels = [c.name for c in cashiers]
+    cashier_sales = [c.sales_total for c in cashiers]
+
+    return render_template(
+        "manager_cashiers.html",
+        cashiers=cashiers,
+        cashier_labels=json.dumps(cashier_labels),
+        cashier_sales=json.dumps(cashier_sales),
+        top_threshold=10000,  # adjust thresholds
+        avg_threshold=5000,
+        top_cashier=max(cashiers, key=lambda c: c.sales_total).name if cashiers else "N/A",
+        total_sales=sum(c.sales_total for c in cashiers),
+        total_discounts=sum(c.discounts for c in cashiers)
+    )
+
+
+@app.route('/manager/customers')
+@login_required
+@role_required("Manager")
+def manager_customers():
+    customers = db.session.query(
+        Customer.name,
+        Customer.phone,
+        func.count(Sale.id).label("total_purchases"),
+        func.avg(Sale.total).label("avg_spend")
+    ).join(Sale, Sale.customer_id == Customer.id)\
+     .group_by(Customer.id).all()
+
+    customer_count = len(customers)
+    repeat_customers = sum(1 for c in customers if c.total_purchases > 5)
+    avg_basket_size = round(sum(c.avg_spend for c in customers) / customer_count, 2) if customer_count else 0
+
+    # Discount usage chart
+    discount_data = db.session.query(
+        Sale.discount, func.count(Sale.id)
+    ).group_by(Sale.discount).all()
+    discount_labels = [f"{d[0]}%" for d in discount_data]
+    discount_values = [d[1] for d in discount_data]
+
+    return render_template(
+        "manager_customers.html",
+        customers=customers,
+        customer_count=customer_count,
+        repeat_customers=repeat_customers,
+        avg_basket_size=avg_basket_size,
+        discount_labels=json.dumps(discount_labels),
+        discount_data=json.dumps(discount_values)
+    )
+
+@app.route('/manager/flag_product/<int:id>', methods=['POST'])
+@login_required
+@role_required("Manager")
+def flag_product(id):
+    product = Product.query.get_or_404(id)
+    # Example: mark product as flagged
+    product.flagged = True
+    db.session.commit()
+    flash(f"Product {product.name} flagged for Admin review.", "warning")
+    return redirect(url_for('manager_inventory'))
+
+@app.route('/admin/flagged_products')
+@login_required
+@role_required("Admin")
+def flagged_products():
+    flagged_items = Product.query.filter_by(flagged=True).all()
+    return render_template("admin_flagged_products.html", flagged_items=flagged_items)
+
+
+@app.route('/admin/unflag_product/<int:id>', methods=['POST'])
+@login_required
+@role_required("Admin")
+def unflag_product(id):
+    product = Product.query.get_or_404(id)
+    product.flagged = False
+    db.session.commit()
+    flash(f"Product {product.name} marked as reviewed.", "success")
+    return redirect(url_for('flagged_products'))
+
+
+@app.route('/admin/discounts_over_time')
+@login_required
+@role_required("Admin")
+def discounts_over_time():
+    # Group discounts by date
+    discount_data = db.session.query(
+        func.date(Sale.date).label("sale_date"),
+        func.sum(Sale.discount).label("total_discount")
+    ).group_by(func.date(Sale.date)).order_by(func.date(Sale.date)).all()
+
+    labels = [str(d.sale_date) for d in discount_data]
+    values = [float(d.total_discount or 0) for d in discount_data]
+
+    return render_template(
+        "admin_discounts_chart.html",
+        labels=json.dumps(labels),
+        values=json.dumps(values)
+    )
 
 
 # JSON parsing filter

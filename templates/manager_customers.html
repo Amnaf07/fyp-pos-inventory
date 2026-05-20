@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Manager - Customers{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">Customer Insights</h2>
+  <p class="text-muted">Managers can monitor customer activity, loyalty, and discount usage.</p>
+
+  <!-- KPI Cards -->
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div class="card text-white bg-primary shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Total Customers</h5>
+          <p class="card-text fs-4">{{ customer_count }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-white bg-success shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Repeat Customers</h5>
+          <p class="card-text fs-4">{{ repeat_customers }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-white bg-info shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Avg Basket Size</h5>
+          <p class="card-text fs-4">{{ avg_basket_size }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customer Table -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header">
+      <i class="bi bi-person-lines-fill"></i> Customer Details
+    </div>
+    <div class="card-body">
+      <table class="table table-striped table-hover">
+        <thead class="table-dark">
+          <tr>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Total Purchases</th>
+            <th>Average Spend</th>
+            <th>Loyalty Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for customer in customers %}
+          <tr>
+            <td>{{ customer.name }}</td>
+            <td>{{ customer.phone }}</td>
+            <td>{{ customer.total_purchases }}</td>
+            <td>{{ customer.avg_spend }}</td>
+            <td>
+              {% if customer.total_purchases > 10 %}
+                <span class="badge bg-success">Loyal</span>
+              {% else %}
+                <span class="badge bg-secondary">New</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Discount Usage Chart -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header">
+      <i class="bi bi-pie-chart"></i> Discount Usage
+    </div>
+    <div class="card-body">
+      <canvas id="discountChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js Script -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('discountChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: discount_labels,
+      datasets: [{
+        label: 'Discount Usage',
+        data: discount_data,
+        backgroundColor: ['#0d6efd', '#198754', '#dc3545', '#ffc107']
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom' },
+        title: { display: true, text: 'Customer Discount Usage' }
+      }
+    }
+  });
+</script>
+{% endblock %}

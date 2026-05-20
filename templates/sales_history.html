@@ -33,12 +33,19 @@ from models import Sale
         <td>{{ sale.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
         <td>{{ "%.2f"|format(sale.total) }}</td>
         <td>
-          <ul>
-            {% for item in sale.items | safe | loads %}
-              <li>{{ item["name"] }} (x{{ item["qty"] }})</li>
-            {% endfor %}
-          </ul>
-        </td>
+  <ul>
+    {% for item in sale.sale_items %}
+      <li>
+        {{ item.product.name }} (x{{ item.quantity }}) — 
+        {{ "%.2f"|format(item.price) }} each
+        {% if item.discount %}
+          , Discount: {{ item.discount }}%
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+</td>
+
       </tr>
       {% endfor %}
     </tbody>

@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Manager - Cashiers{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">Cashier Performance</h2>
+  <p class="text-muted">Managers can monitor cashier activity, sales totals, and discount usage.</p>
+
+  <!-- KPI Cards -->
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div class="card text-white bg-primary shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Top Cashier</h5>
+          <p class="card-text fs-5">{{ top_cashier }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-white bg-success shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Total Sales</h5>
+          <p class="card-text fs-4">{{ total_sales }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-white bg-info shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Discounts Given</h5>
+          <p class="card-text fs-4">{{ total_discounts }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cashier Table -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header">
+      <i class="bi bi-people"></i> Cashier Details
+    </div>
+    <div class="card-body">
+      <table class="table table-striped table-hover">
+        <thead class="table-dark">
+          <tr>
+            <th>Name</th>
+            <th>Total Sales</th>
+            <th>Transactions</th>
+            <th>Discounts</th>
+            <th>Voided Sales</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cashier in cashiers %}
+          <tr>
+            <td>{{ cashier.name }}</td>
+            <td>{{ cashier.sales_total }}</td>
+            <td>{{ cashier.transactions }}</td>
+            <td>{{ cashier.discounts }}</td>
+            <td>{{ cashier.voided }}</td>
+            <td>
+              {% if cashier.sales_total >= top_threshold %}
+                <span class="badge bg-success">Top</span>
+              {% elif cashier.sales_total >= avg_threshold %}
+                <span class="badge bg-secondary">Average</span>
+              {% else %}
+                <span class="badge bg-danger">Needs Attention</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Cashier Comparison Chart -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header">
+      <i class="bi bi-bar-chart"></i> Cashier Sales Comparison
+    </div>
+    <div class="card-body">
+      <canvas id="cashierChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js Script -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('cashierChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: cashier_labels,
+      datasets: [{
+        label: 'Sales Total',
+        data: cashier_sales,
+        backgroundColor: '#0d6efd'
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        title: { display: true, text: 'Cashier Sales Comparison' }
+      }
+    }
+  });
+</script>
+{% endblock %}
