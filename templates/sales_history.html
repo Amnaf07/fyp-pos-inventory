@@ -5,16 +5,24 @@ from models import Sale
 <div class="container mt-4">
   <h2 class="text-center">Sales History</h2>
     </div>
-    <div class="col-md-3">
-      <input type="date" name="end_date" class="form-control"
-             value="{{ end_date if end_date else '' }}">
-    </div>
-    
-    <div class="col-md-3">
-      <button type="submit" class="btn btn-primary">Apply</button>
-      <a href="{{ url_for('sales_history_paginated') }}" class="btn btn-secondary">Reset</a>
-    </div>
-  </form>
+    <form method="GET" action="{{ url_for('sales_history_paginated') }}" class="row g-3 mb-3">
+  <div class="col-md-3">
+    <label for="start_date" class="form-label">Start Date</label>
+    <input type="date" name="start_date" id="start_date" class="form-control"
+           value="{{ start_date if start_date else '' }}">
+  </div>
+
+  <div class="col-md-3">
+    <label for="end_date" class="form-label">End Date</label>
+    <input type="date" name="end_date" id="end_date" class="form-control"
+           value="{{ end_date if end_date else '' }}">
+  </div>
+
+  <div class="col-md-3 align-self-end">
+    <button type="submit" class="btn btn-primary">Apply</button>
+    <a href="{{ url_for('sales_history_paginated') }}" class="btn btn-secondary">Reset</a>
+  </div>
+</form>
 
   <!-- Sales Table -->
   <table class="table table-striped mt-4">
@@ -30,7 +38,7 @@ from models import Sale
       {% for sale in sales %}
       <tr>
         <td>{{ sale.id }}</td>
-        <td>{{ sale.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+        <td>{{ sale.date.strftime("%Y-%m-%d %H:%M:%S") }}</td>
         <td>{{ "%.2f"|format(sale.total) }}</td>
         <td>
   <ul>

@@ -22,6 +22,7 @@ class Product(db.Model):
     stock = db.Column(db.Integer, nullable=False)
     sale_items = db.relationship("SaleItem", back_populates="product")
     flagged = db.Column(db.Boolean, default=False)  
+    category = db.Column(db.String(50), nullable=True) 
 
 class SaleItem(db.Model):
     __tablename__ = "sale_items"

@@ -125,7 +125,6 @@ def edit_user(user_id):
     db.session.commit()
     return redirect(url_for('manage_users'))
 
-from werkzeug.security import generate_password_hash
 
 @app.route('/admin/users/delete/<int:user_id>', methods=['POST'])
 @login_required
@@ -157,7 +156,6 @@ def delete_user(user_id):
 
 # Admin Dashboard
 @app.route("/admin_dashboard")
-@login_required
 @role_required("Admin")
 
 def admin_dashboard():
@@ -278,7 +276,7 @@ def restock_product(product_id):
 @app.route("/cashier_dashboard")
 @login_required
 @role_required("Cashier")
-def dashboard_cashier():
+def cashier_dashboard():
     cashier_id = session.get("user_id")
 
     # All products (if you want to show inventory)
@@ -383,7 +381,8 @@ def add_product():
         name=request.form["name"],
         barcode=request.form["barcode"],
         price=float(request.form["price"]),
-        stock=int(request.form["stock"])
+        stock=int(request.form["stock"]),
+        category=request.form["category"]
     )
     db.session.add(product)
     db.session.commit()
@@ -399,6 +398,7 @@ def edit_product(id):
     product.barcode = request.form["barcode"]
     product.price = float(request.form["price"])
     product.stock = int(request.form["stock"])
+    product.category = request.form["category"]
     db.session.commit()
     flash("Product updated successfully!", "info")
     return redirect(url_for("admin_dashboard"))
@@ -422,7 +422,7 @@ def checkout():
     data = request.get_json()
     cart = data.get("cart", [])
     customer_id = data.get("customer_id") or DEFAULT_CUSTOMER_ID
-    discount = float(data.get("discount", 0))  # NEW: discount percentage
+    discount = float(data.get("discount", 0))  # discount percentage
     cashier_id = session.get("user_id")
 
     # Validate stock
@@ -437,26 +437,37 @@ def checkout():
 
     # Calculate total
     total = sum(item["qty"] * float(item["price"]) for item in cart)
-
-    # Apply discount
     if discount > 0:
         total = total - (total * discount / 100)
 
     # Save sale
     sale = Sale(
         total=total,
-        items=json.dumps(cart),
         cashier_id=cashier_id,
         customer_id=customer_id,
-        date=datetime.utcnow()
+        date=datetime.utcnow(),
+        discount=discount
     )
     db.session.add(sale)
+    db.session.flush()  # ensures sale.id is available
 
-    # Update stock
+    # Save sale items
     for item in cart:
         product = Product.query.get(item["id"])
+        sale_item = SaleItem(
+            sale_id=sale.id,
+            product_id=product.id,
+            quantity=item["qty"],
+            price=float(item["price"]),
+            discount=discount
+        )
+        db.session.add(sale_item)
+
+        # Update stock
         product.stock -= item["qty"]
 
+    # Update totals based on items
+    sale.update_totals()
     db.session.commit()
 
     # Fetch customer and cashier names
@@ -466,30 +477,30 @@ def checkout():
     cashier = User.query.get(cashier_id)
     cashier_name = cashier.username if cashier else "Unknown"
 
-    # Build item details for receipt
+    # Build item details for receipt (with category)
     items = []
-    for item in cart:
-        subtotal = item["qty"] * float(item["price"])
-        if discount > 0:
-            subtotal -= (subtotal * discount / 100)
+    for si in sale.sale_items:
+        subtotal = si.quantity * si.price
+        if si.discount > 0:
+            subtotal -= (subtotal * si.discount / 100)
         items.append({
-            "name": item["name"],
-            "qty": item["qty"],
-            "price": float(item["price"]),
-            "discount": discount,
+            "name": si.product.name,
+            "qty": si.quantity,
+            "price": si.price,
+            "discount": si.discount,
+            "category": si.product.category,   # NEW
             "total": subtotal
         })
 
     return jsonify({
         "message": "Sale successful",
         "receipt_id": sale.id,
-        "total": total,
+        "total": sale.total,
         "customer_name": customer_name,
         "cashier_name": cashier_name,
         "timestamp": sale.date.strftime("%Y-%m-%d %H:%M:%S"),
         "items": items
     })
-
 
 
 #new sale route (form based)
@@ -535,12 +546,13 @@ def new_sale():
 
         flash("Sale created successfully!", "success")
         return redirect(url_for("cashier_sales_history"))
-
+    last_customer_id = session.pop("last_added_customer_id", None)        
     return render_template(
         "new_sale.html",
         products=products,
         customers=customers,
-        DEFAULT_CUSTOMER_ID=DEFAULT_CUSTOMER_ID
+        DEFAULT_CUSTOMER_ID=DEFAULT_CUSTOMER_ID,
+        last_customer_id=last_customer_id
     )
 
 
@@ -612,6 +624,28 @@ def cashier_inventory():
     products = Product.query.all()
     return render_template("cashier_inventory.html", products=products)
 
+@app.route("/cashier/add_customer", methods=["POST"])
+@login_required
+@role_required("Cashier")
+def cashier_add_customer():
+    name = request.form["name"].strip()
+    phone = request.form["phone"].strip()
+
+    if not name:
+        flash("Customer name is required", "danger")
+        return redirect(url_for("new_sale"))
+
+    new_customer = Customer(name=name, phone=phone or None)
+    db.session.add(new_customer)
+    db.session.commit()
+
+    # Save the new customer ID in session
+    session["last_added_customer_id"] = new_customer.id
+
+    flash("Customer added successfully!", "success")
+    return redirect(url_for("new_sale"))
+
+
 
 #MANAGER DASHBOARD
 @app.route('/manager_dashboard')
@@ -644,6 +678,16 @@ def manager_dashboard():
     sales_labels = [str(row[0]) for row in sales_data][::-1]
     sales_values = [row[1] for row in sales_data][::-1]
 
+    # Stock distribution by category
+    stock_distribution = db.session.query(
+    Product.category,
+    func.sum(Product.stock).label("total_stock")
+).group_by(Product.category).all()
+
+    
+    stock_labels = [row[0] for row in stock_distribution]
+    stock_values = [row[1] for row in stock_distribution]
+
     return render_template(
         "manager_dashboard.html",
         sales_today=sales_today,
@@ -652,29 +696,61 @@ def manager_dashboard():
         customer_count=customer_count,
         sales_labels=json.dumps(sales_labels),
         sales_data=json.dumps(sales_values),
-        products=Product.query.all()
+        products=Product.query.all(),
+        stock_labels=json.dumps(stock_labels),   
+        stock_values=json.dumps(stock_values) 
     )
 
 @app.route('/manager/reports')
 @login_required
 @role_required("Manager")
 def manager_reports():
-    # Example: monthly sales totals
-    reports = db.session.query(
-        func.strftime("%Y-%m", Sale.date).label("month"),
-        func.sum(Sale.total).label("total"),
-        func.count(Sale.id).label("count")
-    ).group_by("month").all()
+    range_type = request.args.get("range", "daily")
 
-    labels = [r.month for r in reports]
-    data = [r.total for r in reports]
+    if range_type == "daily":
+        reports = db.session.query(
+            func.date(Sale.date).label("date"),
+            func.sum(Sale.total).label("total"),
+            func.count(Sale.id).label("count")
+        ).group_by("date").all()
+
+    elif range_type == "weekly":
+        reports = db.session.query(
+            func.strftime("%Y-%W", Sale.date).label("date"),
+            func.sum(Sale.total).label("total"),
+            func.count(Sale.id).label("count")
+        ).group_by("date").all()
+
+    else:  # monthly
+        reports = db.session.query(
+            func.strftime("%Y-%m", Sale.date).label("date"),
+            func.sum(Sale.total).label("total"),
+            func.count(Sale.id).label("count")
+        ).group_by("date").all()
+
+    # Format totals to 2 decimal places
+    formatted_reports = []
+    for r in reports:
+        formatted_reports.append({
+            "date": r.date,
+            "total": round(float(r.total), 2),   # ✅ clean decimals
+            "count": r.count
+        })
+
+    labels = [fr["date"] for fr in formatted_reports]
+    data = [fr["total"] for fr in formatted_reports]
+
+    # If AJAX request, return JSON
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return jsonify({"labels": labels, "data": data})
 
     return render_template(
         "manager_reports.html",
-        reports=reports,
+        reports=formatted_reports,
         labels=json.dumps(labels),
         data=json.dumps(data)
     )
+
 
 
 @app.route('/manager/inventory')
@@ -796,6 +872,40 @@ def discounts_over_time():
         labels=json.dumps(labels),
         values=json.dumps(values)
     )
+
+@app.route("/customers")
+@login_required
+@role_required("Manager")
+def customers_list():
+    customers = Customer.query.all()
+    return render_template("customers.html", customers=customers)
+
+@app.route("/customers/add", methods=["POST"])
+@login_required
+@role_required("Manager")
+def add_customer():
+    name = request.form["name"].strip()
+    phone = request.form["phone"].strip()
+
+    if not name:
+        flash("Customer name is required", "danger")
+        return redirect(url_for("customers_list"))
+
+    new_customer = Customer(name=name, phone=phone or None)
+    db.session.add(new_customer)
+    db.session.commit()
+    flash("Customer added successfully!", "success")
+    return redirect(url_for("customers_list"))
+
+@app.route("/customers/delete/<int:id>", methods=["POST"])
+@login_required
+@role_required("Manager")
+def delete_customer(id):
+    customer = Customer.query.get_or_404(id)
+    db.session.delete(customer)
+    db.session.commit()
+    flash("Customer deleted successfully!", "info")
+    return redirect(url_for("customers_list"))
 
 
 # JSON parsing filter

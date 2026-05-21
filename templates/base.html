@@ -103,7 +103,7 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top bg-dark">
       <div class="container-fluid">
-        <a class="navbar-brand" href="#">RetailSync</a>
+        <a class="navbar-brand" href="#" style="font-weight: bold; font-size: 1.5rem; font-family: Times New Roman;">RetailSync</a>
         {% if session.get('user_id') %}
           <button class="btn btn-outline-light d-md-none me-2" id="sidebarToggle">
             <i class="bi bi-list"></i>
@@ -159,7 +159,7 @@
   <ul class="nav flex-column">
     <div class="indicator"></div>
     <li class="nav-item mb-2">
-      <a class="nav-link {% if request.endpoint == 'dashboard_cashier' %}active{% endif %}" href="{{ url_for('dashboard_cashier') }}">
+      <a class="nav-link {% if request.endpoint == 'cashier_dashboard' %}active{% endif %}" href="{{ url_for('cashier_dashboard') }}">
         <i class="bi bi-speedometer2"></i> Dashboard
       </a>
     </li>

@@ -1,3 +1,23 @@
+.sidebar {
+  position: fixed;        /* stays pinned */
+  top: 56px;              /* below navbar */
+  bottom: 0;              /* stretch to bottom */
+  width: 220px;
+  background-color: #212529;
+  color: #fff;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;       /* scroll if content is long */
+}
+.main-content {
+  flex-grow: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  margin-left: 220px;   /* push content to the right of sidebar */
+}
+
+
 
 .uniform-card {
   height: 250px !important;       /* fixed height */
@@ -18,7 +38,7 @@
   font-family:Arial, Helvetica, sans-serif;
 }  
 
-.card:hover {
+dashboard-.card:hover {
   transform: translateY(-4px);
   box-shadow: 0 6px 14px rgba(0,0,0,0.25);
 }
@@ -365,5 +385,16 @@ body.dark-mode .form-control:focus {
 .receipt-table th {
   background-color: #38a0d0 !important;
   color: #fff;
+}
+
+.add-customer-card .btn {
+  background-color: #0d6efd; /* Bootstrap primary */
+  font-size: 0.9rem;
+  padding: 0.4rem 1rem;
+}
+
+.add-customer-card {
+  max-width: 500px;   /* narrower card */
+  margin: 0 auto;     /* center horizontally */
 }
 

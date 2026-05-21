@@ -13,10 +13,10 @@
   const discountChart = new Chart(ctx, {
     type: 'line',
     data: {
-      labels:  labels,
+      labels: {{ labels|safe }},
       datasets: [{
         label: 'Total Discounts',
-        data:  values,
+        data: {{ values|safe }},
         borderColor: 'rgba(255, 99, 132, 1)',
         backgroundColor: 'rgba(255, 99, 132, 0.2)',
         fill: true,

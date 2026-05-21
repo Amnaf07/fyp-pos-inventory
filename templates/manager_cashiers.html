@@ -80,9 +80,12 @@
     <div class="card-header">
       <i class="bi bi-bar-chart"></i> Cashier Sales Comparison
     </div>
-    <div class="card-body">
-      <canvas id="cashierChart"></canvas>
-    </div>
+    <div class="d-flex justify-content-center">
+  <div style="max-width:500px; width:100%;">
+    <canvas id="cashierChart"></canvas>
+  </div>
+</div>
+
   </div>
 </div>
 
@@ -93,15 +96,16 @@
   new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: cashier_labels,
+      labels: {{ cashier_labels|safe }},
       datasets: [{
         label: 'Sales Total',
-        data: cashier_sales,
+        data: {{ cashier_sales|safe }},
         backgroundColor: '#0d6efd'
       }]
     },
     options: {
       responsive: true,
+      mainAspectRatio: false,
       plugins: {
         legend: { display: false },
         title: { display: true, text: 'Cashier Sales Comparison' }
@@ -109,4 +113,5 @@
     }
   });
 </script>
+
 {% endblock %}

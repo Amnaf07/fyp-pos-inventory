@@ -12,7 +12,15 @@
     </select>
     <button class="btn btn-primary">Filter</button>
   </form>
-  <canvas id="reportChart"></canvas>
+ <div class="d-flex justify-content-center">
+  <div style="max-width:700px; width:100%;">
+    <canvas id="reportChart"></canvas>
+  </div>
+</div>
+
+
+
+
   <table class="table mt-4">
     <thead class="table-dark">
         <tr>
@@ -35,9 +43,22 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
   const ctx = document.getElementById('reportChart').getContext('2d');
-  new Chart(ctx, {
+  let reportChart = new Chart(ctx, {
     type: 'bar',
-    data: { labels:labels, datasets: [{ label: 'Sales', data:  data  }] }
+    data: { labels: {{ labels|safe }}, datasets: [{ label: 'Sales', data: {{ data|safe }}, backgroundColor: '#0d6efd' }] },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+
+  document.getElementById('range').addEventListener('change', function() {
+    const range = this.value;
+    fetch(`/manager/reports?range=${range}`, { headers: { "X-Requested-With": "XMLHttpRequest" } })
+      .then(res => res.json())
+      .then(json => {
+        reportChart.data.labels = json.labels;
+        reportChart.data.datasets[0].data = json.data;
+        reportChart.update();
+      });
   });
 </script>
+
 {% endblock %}

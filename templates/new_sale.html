@@ -21,7 +21,12 @@
       <table class="table table-striped product-table">
         <thead class="table-dark">
           <tr>
-            <th>Name</th><th>Barcode</th><th>Price</th><th>Stock</th><th>Add</th>
+            <th>Name</th>
+            <th>Barcode</th>
+            <th>Category</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Add</th>
           </tr>
         </thead>
         <tbody id="productsTable">
@@ -29,6 +34,7 @@
           <tr>
             <td>{{ product.name }}</td>
             <td>{{ product.barcode }}</td>
+            <td>{{ product.category }}</td>
             <td>{{ product.price }}</td>
             <td>{{ product.stock }}</td>
             <td>
@@ -54,15 +60,40 @@
           <label for="customer_id">Customer</label>
           <select class="form-control" id="customer_id" name="customer_id">
             <!-- Default Walk-in -->
-            <option value="{{ DEFAULT_CUSTOMER_ID }}">Walk-in</option>
+            <option value="{{ DEFAULT_CUSTOMER_ID }}" {% if not session.get('last_added_customer_id') %}selected{% endif %}>
+              Walk-in
+              </option>
             <!-- Loop through customers -->
             {% for customer in customers %}
-              <option value="{{ customer.id }}">{{ customer.name }}</option>
+              <option value="{{ customer.id }}"
+               {% if session.get('last_added_customer_id') == customer.id %}selected{% endif %}>
+               {{ customer.name }}
+               </option>
             {% endfor %}
           </select>
         </div>
       </form>
     </div>
+
+    <div class="card add-customer-card mt-3 shadow-sm">
+  <div class="card-header">
+    <i class="bi bi-person-plus"></i> Add New Customer
+  </div>
+  <div class="card-body">
+    <form action="{{ url_for('cashier_add_customer') }}" method="POST" class="row g-2">
+      <div class="col-md-6">
+        <input type="text" name="name" class="form-control" placeholder="Customer Name" required>
+      </div>
+      <div class="col-md-6">
+        <input type="text" name="phone" class="form-control" placeholder="Phone Number">
+      </div>
+      <div class="col-md-12 mt-2 text-end">
+        <button type="submit" class="btn btn-primary">Add Customer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 
     <!-- Cart -->
     <div class="col-md-6">
