@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-3" style="display: inline;">Manage Users</h2>
+   <!-- Add User Button -->
+  <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addUserModal" style="margin-left: 50%;">
+    Add User
+  </button>
+
+ 
+
+  <!-- Users Table -->
+  <table class="table table-striped mt-5">
+    <thead class="table-dark">
+      <tr>
+        <th>Username</th>
+        <th>Role</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td>{{ user.username }}</td>
+        <td>
+          <span class="badge 
+            {% if user.role == 'Admin' %} bg-danger 
+            {% elif user.role == 'Cashier' %} bg-primary 
+            {% else %} bg-success {% endif %}">
+            {{ user.role }}
+          </span>
+        </td>
+        <td>
+          <!-- Edit Button -->
+          <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editUserModal{{ user.id }}">
+            Edit
+          </button>
+
+          <!-- Delete Form -->
+          <form method="POST" action="{{ url_for('delete_user', user_id=user.id) }}" style="display:inline;">
+    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+</form>
+
+        </td>
+      </tr>
+
+      <!-- Edit User Modal -->
+      <div class="modal fade" id="editUserModal{{ user.id }}" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <form method="POST" action="{{ url_for('edit_user', user_id=user.id) }}">
+
+              <div class="modal-header">
+                <h5 class="modal-title">Edit User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <select name="role" class="form-select">
+                  <option value="Admin" {% if user.role == 'Admin' %}selected{% endif %}>Admin</option>
+                  <option value="Cashier" {% if user.role == 'Cashier' %}selected{% endif %}>Cashier</option>
+                  <option value="Manager" {% if user.role == 'Manager' %}selected{% endif %}>Manager</option>
+                </select>
+              </div>
+              <div class="modal-footer">
+                <button type="submit" class="btn btn-success">Save Changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('add_user') }}">
+
+        <div class="modal-header">
+          <h5 class="modal-title">Add User</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="text" name="username" class="form-control mb-2" placeholder="Username" required>
+          <input type="password" name="password" class="form-control mb-2" placeholder="Password" required>
+          <select name="role" class="form-select">
+            <option value="Admin">Admin</option>
+            <option value="Cashier">Cashier</option>
+            <option value="Manager">Manager</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Add User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

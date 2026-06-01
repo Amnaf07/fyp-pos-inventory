@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Inventory (Read‑Only)</h2>
+<p>View stock levels. Editing restricted to Admins.</p>
+
+<table class="table table-striped table-hover table-bordered shadow-sm mt-4">
+  <thead class="table-dark">
+    <tr>
+      <th>Product</th>
+      <th>Stock</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for product in products %}
+    <tr class="{% if product.stock < 5 %}table-danger{% endif %}">
+      <td>{{ product.name }}</td>
+      <td>{{ product.stock }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

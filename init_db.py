@@ -1,10 +1,10 @@
 import sqlite3
 from werkzeug.security import generate_password_hash
 
-conn = sqlite3.connect("database.db")
-c = conn.cursor()
+with sqlite3.connect("database.db") as conn:
+    c = conn.cursor()
 
-# --- Users table ---
+#Users table 
 c.execute("""
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -13,26 +13,35 @@ CREATE TABLE IF NOT EXISTS users (
     role TEXT NOT NULL
 )
 """)
+c.execute("CREATE INDEX IF NOT EXISTS idx_users_username ON users (username)")
 
 # Insert sample users
 admin_pw = generate_password_hash("admin123")
 cashier_pw = generate_password_hash("cashier123")
 
-c.execute("INSERT OR IGNORE INTO users (username, password_hash, role) VALUES (?, ?, ?)",
-          ("amna_admin", admin_pw, "Admin"))
-c.execute("INSERT OR IGNORE INTO users (username, password_hash, role) VALUES (?, ?, ?)",
-          ("ali_cashier", cashier_pw, "Cashier"))
+users =[
+    ("amna_admin", admin_pw, "Admin"),
+    ("ali_cashier", cashier_pw, "Cashier")  
+]
 
-# --- Products table ---
+c.executemany(
+    "INSERT OR IGNORE INTO users (username, password_hash, role) VALUES (?, ?, ?)",users
+
+)
+
+#Products table 
 c.execute("""
 CREATE TABLE IF NOT EXISTS products (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     barcode TEXT UNIQUE NOT NULL,
-    price REAL NOT NULL,
-    stock INTEGER NOT NULL
+    price REAL NOT NULL CHECK (price >= 0),
+    stock INTEGER NOT NULL CHECK (stock >= 0)
 )
 """)
+
+c.execute("CREATE INDEX IF NOT EXISTS idx_products_barcode ON products (barcode)")
+
 
 # Insert sample products
 sample_products = [
@@ -41,11 +50,8 @@ sample_products = [
     ("Eggs", "333333", 200.0, 100),
 ]
 
-for product in sample_products:
-    c.execute("INSERT OR IGNORE INTO products (name, barcode, price, stock) VALUES (?, ?, ?, ?)", product)
+c.executemany("INSERT OR IGNORE INTO products (name, barcode, price, stock) VALUES (?, ?, ?, ?)", sample_products)
 
-# Commit and close at the very end
-conn.commit()
-conn.close()
+print(f"Database initialize with {len(users)} users and {len(sample_products)} products.")
 
-print("Database initialized with sample users and products.")
+

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Manager Reports{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Sales Reports</h2>
+  <form method="GET" class="mb-3">
+    <label for="range">Select Range:</label>
+    <select name="range" id="range" class="form-select w-auto d-inline-block">
+      <option value="daily">Daily</option>
+      <option value="weekly">Weekly</option>
+      <option value="monthly">Monthly</option>
+    </select>
+    <button class="btn btn-primary">Filter</button>
+  </form>
+ <div class="d-flex justify-content-center">
+  <div style="max-width:700px; width:100%;">
+    <canvas id="reportChart"></canvas>
+  </div>
+</div>
+
+
+
+
+  <table class="table mt-4">
+    <thead class="table-dark">
+        <tr>
+            <th>Date</th>
+            <th>Total Sales</th>
+            <th>Transactions</th>
+        </tr>
+    </thead>
+    <tbody>
+      {% for report in reports %}
+      <tr>
+        <td>{{ report.date }}</td>
+        <td>{{ report.total }}</td>
+        <td>{{ report.count }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('reportChart').getContext('2d');
+  let reportChart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: {{ labels|safe }}, datasets: [{ label: 'Sales', data: {{ data|safe }}, backgroundColor: '#0d6efd' }] },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+
+  document.getElementById('range').addEventListener('change', function() {
+    const range = this.value;
+    fetch(`/manager/reports?range=${range}`, { headers: { "X-Requested-With": "XMLHttpRequest" } })
+      .then(res => res.json())
+      .then(json => {
+        reportChart.data.labels = json.labels;
+        reportChart.data.datasets[0].data = json.data;
+        reportChart.update();
+      });
+  });
+</script>
+
+{% endblock %}

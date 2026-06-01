@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   const cartTableBody = document.querySelector("#cartTable tbody");
   const grandTotalEl = document.getElementById("grandTotal");
+  const discountInput = document.getElementById("discount"); // discount field
   let cart = [];
 
   // Reset Add Product modal
@@ -30,15 +31,17 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Search
-  document.getElementById("searchBar").addEventListener("keyup", function() {
-  let filter = this.value.toLowerCase();
-  let rows = document.querySelectorAll("#productTable tr");
-  rows.forEach(row => {
-    let text = row.textContent.toLowerCase();
-    row.style.display = text.includes(filter) ? "" : "none";
-  });
-});
-
+  const searchBar = document.getElementById("searchBar");
+  if (searchBar) {
+    searchBar.addEventListener("keyup", function() {
+      let filter = this.value.toLowerCase();
+      let rows = document.querySelectorAll("#productsTable tr");
+      rows.forEach(row => {
+        let text = row.textContent.toLowerCase();
+        row.style.display = text.includes(filter) ? "" : "none";
+      });
+    });
+  }
 
   // Render cart
   function renderCart() {
@@ -63,6 +66,13 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
       cartTableBody.appendChild(row);
     });
+
+    // Apply discount to grand total
+    let discount = parseFloat(discountInput.value) || 0;
+    if (discount > 0) {
+      if (discount > 100) discount = 100; // safety cap
+      total = total - (total * discount / 100);
+    }
 
     grandTotalEl.textContent = total.toFixed(2);
 
@@ -95,52 +105,67 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Recalculate when discount changes
+  discountInput.addEventListener("input", renderCart);
+
   // Checkout
   document.getElementById("checkoutBtn").addEventListener("click", () => {
     if (cart.length === 0) {
-      alert("Cart is empty!");
+        alert("Cart is empty!");
+        return;
+    }
+
+    const customerId = document.getElementById("customer_id").value;
+    let discount = parseFloat(discountInput.value) || 0;
+
+    // Validation
+    if (discount < 0 || discount > 100) {
+      alert("Discount must be between 0 and 100%");
       return;
     }
 
     fetch("/checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ cart })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cart, customer_id: customerId, discount })
     })
     .then(res => res.json())
     .then(data => {
-      // Populate receipt modal
-      const receiptTableBody = document.getElementById("receiptTableBody");
-      const receiptGrandTotal = document.getElementById("receiptGrandTotal");
-      const receiptId = document.getElementById("receiptId");
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
 
-      receiptTableBody.innerHTML = "";
-      let total = 0;
+        const receiptTableBody = document.getElementById("receiptTableBody");
+        const receiptGrandTotal = document.getElementById("receiptGrandTotal");
+        const receiptId = document.getElementById("receiptId");
+        const receiptCustomer = document.getElementById("receiptCustomer");
 
-      cart.forEach(item => {
-        const row = document.createElement("tr");
-        const itemTotal = item.qty * item.price;
-        total += itemTotal;
+        receiptTableBody.innerHTML = "";
+        data.items.forEach(item => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${item.name}</td>
+              <td>${item.qty}</td>
+              <td>${item.price.toFixed(2)}</td>
+              <td>${item.discount ? item.discount + "%" : "-"}</td>
+              <td>${item.total.toFixed(2)}</td>
+            `;
+            receiptTableBody.appendChild(row);
+        });
 
-        row.innerHTML = `
-          <td>${item.name}</td>
-          <td>${item.qty}</td>
-          <td>${item.price.toFixed(2)}</td>
-          <td>${itemTotal.toFixed(2)}</td>
-        `;
-        receiptTableBody.appendChild(row);
-      });
+        receiptGrandTotal.textContent = data.total.toFixed(2);
+        receiptId.textContent = data.receipt_id;
+        receiptCustomer.textContent = data.customer_name;
+        document.getElementById("receiptCashier").textContent = data.cashier_name;
+        document.getElementById("receiptTimestamp").textContent = data.timestamp;
+        const receiptModal = new bootstrap.Modal(document.getElementById("receiptModal"));
+        receiptModal.show();
 
-      receiptGrandTotal.textContent = total.toFixed(2);
-      receiptId.textContent = data.receipt_id;
-
-      // Show modal
-      const receiptModal = new bootstrap.Modal(document.getElementById("receiptModal"));
-      receiptModal.show();
-
-      // Clear cart
-      cart = [];
-      renderCart();
+        // Reset cart and discount field
+        cart = [];
+        discountInput.value = "0";   // reset discount
+        renderCart();
     });
   });
 
@@ -149,7 +174,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (printBtn) {
     printBtn.addEventListener("click", () => {
       const receiptContent = document.getElementById("receiptModal").querySelector(".modal-body").innerHTML;
-
       const printWindow = window.open("", "", "width=800,height=600");
       printWindow.document.write(`
         <html>
@@ -167,4 +191,5 @@ document.addEventListener("DOMContentLoaded", () => {
       printWindow.print();
     });
   }
+
 });

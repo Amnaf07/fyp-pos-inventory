@@ -2,17 +2,272 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>{% block title %}POS System{% endblock %}</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <title>{% block title %}Retail Sync{% endblock %}</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+  <style>
+    body { 
+      padding-top: 56px; 
+      height: 100vh;
+      margin: 0;
+    } 
+
+    .layout {
+      display: flex;
+      min-height: calc(100vh - 56px); /* account for navbar */
+    }
+
+    .sidebar {
+      width: 220px;
+      background-color: #212529;
+      color: #fff;
+      padding: 1rem;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 56px);
+    }
+
+    .main-content { 
+      flex-grow: 1;
+      padding: 1rem;
+      overflow-y: auto; 
+    } 
+
+    @media (max-width: 768px) {
+      .sidebar {
+        position: fixed;
+        top: 56px;
+        left: 0;
+        width: 250px;
+        height: calc(100vh - 56px);
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: 1050;
+      }
+      .sidebar.active { transform: translateX(0); }
+      .main-content { margin-left: 0; }
+    }
+
+    /* Force all sidebar links to be white */
+      .sidebar .nav-link {
+        color: #fff !important;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem; /* space between icon and text */
+}
+
+    /* Active tab styling */
+    .sidebar .nav-link.active {
+      background-color: #343a40;
+      color: #fff;
+      font-weight: bold;
+      border-radius: 4px;
+    }
+    .sidebar .nav-link.active i {
+  color: #fff; /* bright white icon when active */
+}
+    /* Hover effect */
+    .sidebar .nav-link:hover {
+      background-color: #495057;
+      color: #fff;  
+      border-radius: 4px;
+      transition: background-color 0.2s ease;
+    }
+
+    .sidebar .nav-link:hover i {
+  color: #fff; /* icon turns white on hover */
+}
+
+    .sidebar .nav {
+      position: relative;
+    }
+
+    /* Indicator bar */
+    .sidebar .indicator {
+      position: absolute;
+      left: 0;
+      width: 4px;
+      background-color: #0d6efd;
+      border-radius: 2px;
+      transition: top 0.3s ease, height 0.3s ease;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-  {% include "_navbar.html" %}
+  {% if request.endpoint not in ['login','register'] %}
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top bg-dark">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#" style="font-weight: bold; font-size: 1.5rem; font-family: Times New Roman;">RetailSync</a>
+        {% if session.get('user_id') %}
+          <button class="btn btn-outline-light d-md-none me-2" id="sidebarToggle">
+            <i class="bi bi-list"></i>
+          </button>
+          <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+        {% endif %}
+      </div>
+    </nav>
 
-  <div class="container mt-4">
+    <div class="layout">
+      {% if session.get('user_id') %}
+        <!-- Sidebar -->
+        <nav class="sidebar">
+         <!-- role based links -->
+          {% if session.get('role') == 'Admin' %}
+  <h4 class="mb-4">Admin Panel</h4>
+  <ul class="nav flex-column">
+    <div class="indicator"></div>
+    <li class="nav-item mb-2">
+      <a class="nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
+        <i class="bi bi-speedometer2"></i> Dashboard
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a class="nav-link {% if request.endpoint == 'manage_users' %}active{% endif %}" href="{{ url_for('manage_users') }}">
+        <i class="bi bi-people"></i> Manage Users
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a class="nav-link {% if request.endpoint == 'products_table' %}active{% endif %}" href="{{ url_for('products_table') }}">
+        <i class="bi bi-box-seam"></i> Products
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="{{ url_for('flagged_products') }}">
+        <i class="bi bi-flag"></i> Flagged Products
+      </a>
+    </li>
+    <li class="nav-item">
+  <a class="nav-link" href="{{ url_for('discounts_over_time') }}">
+    <i class="bi bi-graph-up"></i> Discounts Over Time
+  </a>
+</li>
+
+    <li class="nav-item mb-2">
+      <a class="nav-link {% if request.endpoint == 'sales_history_paginated' %}active{% endif %}" href="{{ url_for('sales_history_paginated') }}">
+        <i class="bi bi-receipt"></i> Sales History
+      </a>
+    </li>
+  </ul>
+{% elif session.get('role') == 'Cashier' %}
+  <h4 class="mb-4">Cashier Panel</h4>
+  <ul class="nav flex-column">
+    <div class="indicator"></div>
+    <li class="nav-item mb-2">
+      <a class="nav-link {% if request.endpoint == 'cashier_dashboard' %}active{% endif %}" href="{{ url_for('cashier_dashboard') }}">
+        <i class="bi bi-speedometer2"></i> Dashboard
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a class="nav-link {% if request.endpoint == 'new_sale' %}active{% endif %}" href="{{ url_for('new_sale') }}">
+        <i class="bi bi-cart"></i> New Sale
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a class="nav-link {% if request.endpoint == 'cashier_sales_history' %}active{% endif %}" href="{{ url_for('cashier_sales_history') }}">
+        <i class="bi bi-receipt"></i> My Sales
+      </a>
+    </li>
+  </ul>
+{% elif session.get('role') == 'Manager' %}
+  <h4 class="mb-4">Manager Panel</h4>
+  <ul class="nav flex-column">
+    <div class="indicator"></div>
+    <li class="nav-item"><a class="nav-link" href="{{ url_for('manager_dashboard') }}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+    <li class="nav-item"><a class="nav-link" href="{{ url_for('manager_reports') }}"><i class="bi bi-bar-chart"></i> Sales Reports</a></li>
+    <li class="nav-item"><a class="nav-link" href="{{ url_for('manager_inventory') }}"><i class="bi bi-box-seam"></i> Inventory Status</a></li>
+    <li class="nav-item"><a class="nav-link" href="{{ url_for('manager_cashiers') }}"><i class="bi bi-people"></i> Cashier Performance</a></li>
+    <li class="nav-item"><a class="nav-link" href="{{ url_for('manager_customers') }}"><i class="bi bi-person-lines-fill"></i> Customer Insights</a></li>
+{% endif %}
+
+<!-- Logout always visible -->
+<ul class="nav flex-column mt-3">
+  <li class="nav-item mb-2">
+    <a class="nav-link" href="{{ url_for('logout') }}">
+      <i class="bi bi-box-arrow-right"></i> Logout
+    </a>
+  </li>
+</ul>
+
+        </nav>
+      {% endif %}
+    {% endif %}
+
+    
+
+  <!-- ✅ Single content block always available -->
+  <main class="main-content" id="content-area">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="container mt-3">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+              <span>{{ message }}</span>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
     {% block content %}{% endblock %}
-  </div>
+  </main>
+ {% if request.endpoint not in ['login','register'] %}
+    </div> <!-- close .layout -->
+  {% endif %}
+  
+</body>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+</script>
+  <script>
+    const toggleBtn = document.getElementById("sidebarToggle");
+    const sidebar = document.querySelector(".sidebar");
+    toggleBtn?.addEventListener("click", () => {
+      sidebar.classList.toggle("active");
+    });
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  function moveIndicator() {
+    const activeLink = document.querySelector(".sidebar .nav-link.active");
+    const indicator = document.querySelector(".sidebar .indicator");
+    if (activeLink && indicator) {
+      const linkRect = activeLink.getBoundingClientRect();
+      const navRect = activeLink.parentElement.parentElement.getBoundingClientRect();
+      indicator.style.top = (linkRect.top - navRect.top) + "px";
+      indicator.style.height = linkRect.height + "px";
+    }
+  }
+
+  // Run on page load
+  window.addEventListener("DOMContentLoaded", moveIndicator);
+
+  // Run again when resizing
+  window.addEventListener("resize", moveIndicator);
+
+  // Optional: run when clicking links
+  document.querySelectorAll(".sidebar .nav-link").forEach(link => {
+    link.addEventListener("click", () => {
+      document.querySelectorAll(".sidebar .nav-link").forEach(l => l.classList.remove("active"));
+      link.classList.add("active");
+      moveIndicator();
+    });
+  });
+
+  //Au to-dismiss flash alerts with fade-out
+  setTimeout(() => {
+    document.querySelectorAll('.alert').forEach(alert => {
+      alert.classList.remove('show'); // triggers fade
+      setTimeout(() => {
+        let bsAlert = new bootstrap.Alert(alert);
+        bsAlert.close();
+      }, 500); // wait for fade animation
+    });
+  }, 3800);
+
+  </script>
 </body>
 </html>
